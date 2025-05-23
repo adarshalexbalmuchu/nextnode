@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,15 +22,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+
+        // Create or update profile when user signs up or signs in
+        if (session?.user && (event === 'SIGNED_IN' || event === 'SIGNED_UP')) {
+          const { error } = await supabase.from('profiles').upsert({
+            id: session.user.id,
+            email: session.user.email,
+            full_name: session.user.user_metadata.full_name,
+            updated_at: new Date().toISOString(),
+          });
+
+          if (error) {
+            console.error('Error updating profile:', error);
+          }
+        }
       }
     );
 
-    // THEN check for existing session
+    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -65,7 +78,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         },
       });
       if (error) throw error;
-      toast.success('Signed up successfully! Check your email for verification.');
+      toast.success('Signed up successfully! You can now sign in.');
+      navigate('/auth');
     } catch (error: any) {
       toast.error(error.message || 'Error signing up');
       console.error('Error signing up:', error);

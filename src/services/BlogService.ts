@@ -1,8 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { BlogPost } from '@/data/blogPosts';
 
-// Type for creating and updating posts
 export interface PostInput {
   title: string;
   content?: string;
@@ -23,6 +21,7 @@ export const BlogService = {
       .select('*')
       .eq('draft', false)
       .not('published_at', 'is', null)
+      .lte('published_at', new Date().toISOString())
       .order('published_at', { ascending: false });
       
     if (error) {
@@ -30,7 +29,7 @@ export const BlogService = {
       throw error;
     }
     
-    return data.map((post: any) => ({
+    return data.map((post) => ({
       id: post.id,
       title: post.title,
       excerpt: post.excerpt || '',
@@ -42,8 +41,9 @@ export const BlogService = {
         month: 'long',
         day: 'numeric',
       }),
-      readTime: '5 min read', // This would be calculated based on content length
+      readTime: `${Math.ceil(post.content.split(' ').length / 200)} min read`,
       tags: post.tags || [],
+      content: post.content || '',
     }));
   },
   
@@ -64,9 +64,11 @@ export const BlogService = {
   
   // Get a single post by slug
   getPostBySlug: async (slug: string): Promise<any> => {
-    let query = supabase.from('posts').select('*').eq('slug', slug);
-    
-    const { data, error } = await query.single();
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('slug', slug)
+      .single();
     
     if (error) {
       console.error('Error fetching post:', error);
@@ -75,22 +77,21 @@ export const BlogService = {
     
     return {
       ...data,
-      publishDate: new Date(data.published_at).toLocaleDateString('en-US', {
+      publishDate: data.published_at ? new Date(data.published_at).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
-      }),
-      readTime: '5 min read', // This would be calculated based on content length
+      }) : null,
+      readTime: `${Math.ceil(data.content.split(' ').length / 200)} min read`,
       coverImage: data.cover_image_url,
     };
   },
   
   // Create a new post
   createPost: async (post: PostInput): Promise<any> => {
-    // Generate a slug from the title
     const slug = post.title
       .toLowerCase()
-      .replace(/[^\w\s]/gi, '')
+      .replace(/[^\w\s-]/g, '')
       .replace(/\s+/g, '-');
       
     const { data, error } = await supabase.from('posts').insert({
@@ -117,8 +118,7 @@ export const BlogService = {
   updatePost: async (id: string, post: Partial<PostInput>): Promise<any> => {
     const updateData: any = { ...post };
     
-    // Convert Date to ISO string if present
-    if (updateData.published_at && updateData.published_at instanceof Date) {
+    if (updateData.published_at instanceof Date) {
       updateData.published_at = updateData.published_at.toISOString();
     }
     
@@ -153,20 +153,19 @@ export const BlogService = {
   uploadImage: async (file: File): Promise<string> => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const filePath = `${fileName}`;
     
-    const { data, error } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('blog-images')
-      .upload(filePath, file);
+      .upload(fileName, file);
       
-    if (error) {
-      console.error('Error uploading image:', error);
-      throw error;
+    if (uploadError) {
+      console.error('Error uploading image:', uploadError);
+      throw uploadError;
     }
     
     const { data: urlData } = supabase.storage
       .from('blog-images')
-      .getPublicUrl(filePath);
+      .getPublicUrl(fileName);
       
     return urlData.publicUrl;
   },
