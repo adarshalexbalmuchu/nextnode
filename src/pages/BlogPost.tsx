@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -7,6 +6,7 @@ import { blogPosts } from '@/data/blogPosts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar, Clock, User, Share2, Facebook, Twitter, Linkedin, Copy } from 'lucide-react';
 import { toast } from 'sonner';
+import BlogCard from '@/components/BlogCard';
 
 const BlogPost = () => {
   const { slug } = useParams();

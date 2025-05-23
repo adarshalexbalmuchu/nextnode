@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Calendar, Eye, FileText, TrendingUp, User } from 'lucide-react';
+import { Calendar, Eye, FileText, TrendingUp, User, Clock } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 
 const Dashboard = () => {
