@@ -93,19 +93,17 @@ export const BlogService = {
       .replace(/[^\w\s]/gi, '')
       .replace(/\s+/g, '-');
       
-    const { data, error } = await supabase.from('posts').insert([
-      {
-        title: post.title,
-        slug,
-        content: post.content || '',
-        cover_image_url: post.cover_image_url || '',
-        category: post.category || '',
-        author: post.author,
-        tags: post.tags || [],
-        draft: post.draft !== undefined ? post.draft : true,
-        published_at: post.published_at || null,
-      },
-    ]).select();
+    const { data, error } = await supabase.from('posts').insert({
+      title: post.title,
+      slug,
+      content: post.content || '',
+      cover_image_url: post.cover_image_url || '',
+      category: post.category || '',
+      author: post.author,
+      tags: post.tags || [],
+      draft: post.draft !== undefined ? post.draft : true,
+      published_at: post.published_at ? post.published_at.toISOString() : null,
+    }).select();
     
     if (error) {
       console.error('Error creating post:', error);
@@ -117,9 +115,16 @@ export const BlogService = {
   
   // Update an existing post
   updatePost: async (id: string, post: Partial<PostInput>): Promise<any> => {
+    const updateData: any = { ...post };
+    
+    // Convert Date to ISO string if present
+    if (updateData.published_at && updateData.published_at instanceof Date) {
+      updateData.published_at = updateData.published_at.toISOString();
+    }
+    
     const { data, error } = await supabase
       .from('posts')
-      .update(post)
+      .update(updateData)
       .eq('id', id)
       .select();
       

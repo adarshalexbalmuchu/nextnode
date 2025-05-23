@@ -17,11 +17,15 @@ const BlogPost = () => {
   const { data: post, isLoading, error } = useQuery({
     queryKey: ['blog-post', slug],
     queryFn: () => BlogService.getPostBySlug(slug!),
-    retry: false,
-    onError: () => {
+    retry: false
+  });
+  
+  // Handle error by redirecting to 404
+  useEffect(() => {
+    if (error) {
       navigate('/not-found', { replace: true });
     }
-  });
+  }, [error, navigate]);
   
   const { data: relatedPosts } = useQuery({
     queryKey: ['related-posts', post?.category],
