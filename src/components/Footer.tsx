@@ -1,9 +1,10 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
-    <footer className="bg-slate-900 text-white py-12">
+    <footer className="bg-slate-900 text-white dark:bg-gray-950 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
@@ -21,26 +22,26 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Categories</h3>
             <ul className="space-y-2 text-gray-300">
-              <li><a href="#" className="hover:text-teal-400 transition-colors">AI Innovations</a></li>
-              <li><a href="#" className="hover:text-teal-400 transition-colors">Technology News</a></li>
-              <li><a href="#" className="hover:text-teal-400 transition-colors">Industry Insights</a></li>
-              <li><a href="#" className="hover:text-teal-400 transition-colors">Machine Learning</a></li>
+              <li><Link to="/blog?category=AI%20Innovations" className="hover:text-teal-400 transition-colors">AI Innovations</Link></li>
+              <li><Link to="/blog?category=Technology%20News" className="hover:text-teal-400 transition-colors">Technology News</Link></li>
+              <li><Link to="/blog?category=Industry%20Insights" className="hover:text-teal-400 transition-colors">Industry Insights</Link></li>
+              <li><Link to="/blog?category=Machine%20Learning" className="hover:text-teal-400 transition-colors">Machine Learning</Link></li>
             </ul>
           </div>
           
           <div>
             <h3 className="text-lg font-semibold mb-4">Company</h3>
             <ul className="space-y-2 text-gray-300">
-              <li><a href="#" className="hover:text-teal-400 transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-teal-400 transition-colors">Contact</a></li>
-              <li><a href="#" className="hover:text-teal-400 transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-teal-400 transition-colors">Terms of Service</a></li>
+              <li><Link to="/about" className="hover:text-teal-400 transition-colors">About Us</Link></li>
+              <li><Link to="/about#contact" className="hover:text-teal-400 transition-colors">Contact</Link></li>
+              <li><Link to="/privacy-policy" className="hover:text-teal-400 transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms-of-service" className="hover:text-teal-400 transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
         </div>
         
         <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; 2024 NextNode. All rights reserved. Powered by innovation and insight.</p>
+          <p>&copy; {new Date().getFullYear()} NextNode. All rights reserved. Powered by innovation and insight.</p>
         </div>
       </div>
     </footer>
