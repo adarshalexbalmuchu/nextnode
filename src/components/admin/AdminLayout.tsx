@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Bell, FileText, Home, LayoutDashboard, LogOut, Menu, Moon, Plus, Settings, Sun, User, X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -12,6 +13,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const navigate = useNavigate();
+  const { signOut, user } = useAuth();
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -20,6 +22,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const toggleTheme = () => {
     setDarkMode(!darkMode);
     // In a real implementation, we would update the theme here
+  };
+
+  const handleLogout = async () => {
+    await signOut();
   };
 
   return (
@@ -92,6 +98,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             <Button 
               variant="ghost" 
               className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={handleLogout}
             >
               <LogOut className="mr-2 h-4 w-4" />
               Logout

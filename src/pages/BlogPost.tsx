@@ -1,31 +1,33 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { blogPosts } from '@/data/blogPosts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar, Clock, User, Share2, Facebook, Twitter, Linkedin, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import BlogCard from '@/components/BlogCard';
+import { BlogService } from '@/services/BlogService';
+import { useQuery } from '@tanstack/react-query';
 
 const BlogPost = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
-  const [post, setPost] = useState<any>(null);
   
-  // Simulate loading and fetch blog post
-  useEffect(() => {
-    setTimeout(() => {
-      const foundPost = blogPosts.find(post => post.id === slug);
-      if (foundPost) {
-        setPost(foundPost);
-      } else {
-        navigate('/not-found', { replace: true });
-      }
-      setIsLoading(false);
-    }, 800); // Simulate loading delay
-  }, [slug, navigate]);
+  const { data: post, isLoading, error } = useQuery({
+    queryKey: ['blog-post', slug],
+    queryFn: () => BlogService.getPostBySlug(slug!),
+    retry: false,
+    onError: () => {
+      navigate('/not-found', { replace: true });
+    }
+  });
+  
+  const { data: relatedPosts } = useQuery({
+    queryKey: ['related-posts', post?.category],
+    queryFn: () => BlogService.getPublishedPosts(),
+    enabled: Boolean(post?.category)
+  });
   
   const handleShare = (platform: string) => {
     const url = window.location.href;
@@ -36,7 +38,7 @@ const BlogPost = () => {
     } else if (platform === 'facebook') {
       window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
     } else if (platform === 'twitter') {
-      window.open(`https://twitter.com/intent/tweet?url=${url}&text=${post.title}`, '_blank');
+      window.open(`https://twitter.com/intent/tweet?url=${url}&text=${post?.title}`, '_blank');
     } else if (platform === 'linkedin') {
       window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank');
     }
@@ -80,69 +82,39 @@ const BlogPost = () => {
                 <Clock size={16} />
                 <span>{post.readTime}</span>
               </div>
-              <span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm">
-                {post.category}
-              </span>
+              {post.category && (
+                <span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm">
+                  {post.category}
+                </span>
+              )}
             </div>
             
-            <img 
-              src={post.coverImage} 
-              alt={post.title}
-              className="w-full h-auto rounded-xl object-cover mb-8"
-            />
+            {post.coverImage && (
+              <img 
+                src={post.coverImage} 
+                alt={post.title}
+                className="w-full h-auto rounded-xl object-cover mb-8"
+              />
+            )}
             
             <div className="prose prose-lg max-w-none">
               {/* This would typically be rendered Markdown content */}
-              <p className="text-gray-800 leading-relaxed mb-4">
-                {post.excerpt}
-              </p>
-              
-              <p className="text-gray-800 leading-relaxed mb-4">
-                The world of artificial intelligence is evolving at an unprecedented pace. Every day, researchers and engineers are pushing the boundaries of what AI systems can do, how they learn, and how they interact with humans. This article explores the cutting-edge innovations in AI that are shaping our future.
-              </p>
-              
-              <h2 className="text-2xl font-bold mt-8 mb-4 text-gray-900">The Evolution of Large Language Models</h2>
-              
-              <p className="text-gray-800 leading-relaxed mb-4">
-                Large Language Models (LLMs) have come a long way since their inception. From GPT-1 to the latest models, we've seen tremendous improvements in capabilities, understanding, and reasoning. These models can now perform tasks that seemed impossible just a few years ago.
-              </p>
-              
-              <p className="text-gray-800 leading-relaxed mb-4">
-                One of the most exciting developments is the ability of these models to understand and generate human language with remarkable accuracy. They can write essays, answer questions, summarize long documents, translate between languages, and even create creative content like poetry and fiction.
-              </p>
-              
-              <h2 className="text-2xl font-bold mt-8 mb-4 text-gray-900">Multimodal AI: Beyond Text</h2>
-              
-              <p className="text-gray-800 leading-relaxed mb-4">
-                The future of AI is multimodal – systems that can understand and generate content across multiple formats, including text, images, audio, and video. This represents a significant leap forward in creating AI that can interact with the world more like humans do.
-              </p>
-              
-              <p className="text-gray-800 leading-relaxed mb-4">
-                Multimodal models can describe what they see in images, generate images from text descriptions, understand and transcribe spoken language, and even create videos from text prompts. This versatility opens up new possibilities for applications in areas like healthcare, education, entertainment, and more.
-              </p>
-              
-              <h2 className="text-2xl font-bold mt-8 mb-4 text-gray-900">Conclusion: The Road Ahead</h2>
-              
-              <p className="text-gray-800 leading-relaxed mb-4">
-                As AI continues to evolve, we can expect even more groundbreaking innovations in the coming years. From more capable language models to increasingly sophisticated multimodal systems, the future of AI is bright with possibility.
-              </p>
-              
-              <p className="text-gray-800 leading-relaxed mb-4">
-                But with these advances come important questions about ethics, regulation, and responsible use. As we push the boundaries of what AI can do, we must also ensure that we're developing these technologies in ways that benefit humanity and mitigate potential risks.
-              </p>
+              <div dangerouslySetInnerHTML={{ __html: post.content }}></div>
             </div>
             
             {/* Tags */}
-            <div className="mt-8 flex flex-wrap gap-2">
-              {post.tags.map((tag: string, index: number) => (
-                <span 
-                  key={index}
-                  className="bg-gray-100 text-gray-600 px-3 py-1 rounded text-sm"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
+            {post.tags && post.tags.length > 0 && (
+              <div className="mt-8 flex flex-wrap gap-2">
+                {post.tags.map((tag: string, index: number) => (
+                  <span 
+                    key={index}
+                    className="bg-gray-100 text-gray-600 px-3 py-1 rounded text-sm"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
             
             {/* Share options */}
             <div className="mt-10 pt-6 border-t border-gray-200">
@@ -185,7 +157,7 @@ const BlogPost = () => {
             <div className="mt-12 p-6 bg-gray-100 rounded-xl">
               <div className="flex items-start sm:items-center flex-col sm:flex-row gap-4">
                 <div className="h-16 w-16 rounded-full bg-teal-600 flex items-center justify-center text-white text-xl font-bold">
-                  {post.author.split(' ').map((n: string) => n[0]).join('')}
+                  {post.author?.split(' ').map((n: string) => n[0]).join('')}
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold mb-2">{post.author}</h3>
@@ -201,15 +173,15 @@ const BlogPost = () => {
       </main>
       
       {/* Related Articles Section */}
-      {!isLoading && post && (
+      {!isLoading && post && relatedPosts && (
         <section className="bg-gray-100 py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-2xl font-bold mb-8 text-center">Related Articles</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {blogPosts
-                .filter(p => p.id !== post.id && p.category === post.category)
+              {relatedPosts
+                .filter((p: any) => p.id !== post.id && p.category === post.category)
                 .slice(0, 3)
-                .map(relatedPost => (
+                .map((relatedPost: any) => (
                   <BlogCard key={relatedPost.id} post={relatedPost} />
                 ))}
             </div>
