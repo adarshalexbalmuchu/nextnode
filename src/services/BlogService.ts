@@ -1,32 +1,37 @@
-import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
 
-type Post = Database['public']['Tables']['posts']['Row'];
-type PostInsert = Database['public']['Tables']['posts']['Insert'];
-type PostUpdate = Database['public']['Tables']['posts']['Update'];
-type Profile = Database['public']['Tables']['profiles']['Row'];
+import { supabase } from '@/integrations/supabase/client';
 
 export interface PostInput {
   title: string;
   content?: string;
+  excerpt?: string;
   cover_image_url?: string;
-  category?: string;
-  author: string;
+  category_id?: string;
   tags?: string[];
-  draft?: boolean;
+  status?: 'draft' | 'published' | 'archived';
   published_at?: Date | null;
 }
 
 export interface BlogPost {
   id: string;
   title: string;
+  slug: string;
   content: string;
+  excerpt: string;
   coverImage: string;
   category: string;
   author: string;
   publishDate: string;
   readTime: string;
   tags: string[];
+  status: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
 }
 
 export interface ServiceError extends Error {
@@ -36,7 +41,7 @@ export interface ServiceError extends Error {
 
 export const BlogService = {
   // Get all posts (published and drafts) - requires admin access
-  getAllPosts: async (): Promise<Post[]> => {
+  getAllPosts: async (): Promise<any[]> => {
     console.log('[BlogService] Starting getAllPosts');
     try {
       // First check user session
@@ -48,7 +53,7 @@ export const BlogService = {
 
       // Then check user role
       const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
+        .from('users')
         .select('role')
         .eq('id', session.data.session.user.id)
         .single();
@@ -65,10 +70,14 @@ export const BlogService = {
         throw new Error('Insufficient permissions');
       }
 
-      // Finally fetch posts
+      // Finally fetch posts with author and category info
       const { data, error } = await supabase
         .from('posts')
-        .select('*')
+        .select(`
+          *,
+          author:users(full_name),
+          category:categories(name)
+        `)
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -90,8 +99,12 @@ export const BlogService = {
     try {
       const { data, error } = await supabase
         .from('posts')
-        .select('*')
-        .eq('draft', false)
+        .select(`
+          *,
+          author:users(full_name),
+          category:categories(name)
+        `)
+        .eq('status', 'published')
         .not('published_at', 'is', null)
         .lte('published_at', new Date().toISOString())
         .order('published_at', { ascending: false });
@@ -101,13 +114,15 @@ export const BlogService = {
         throw error;
       }
       
-      return (data as Post[]).map((post) => ({
+      return (data as any[]).map((post) => ({
         id: post.id,
         title: post.title,
+        slug: post.slug,
         content: post.content || '',
+        excerpt: post.excerpt || '',
         coverImage: post.cover_image_url || '',
-        category: post.category || '',
-        author: post.author,
+        category: post.category?.name || '',
+        author: post.author?.full_name || 'Unknown',
         publishDate: new Date(post.published_at || '').toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'long',
@@ -115,6 +130,7 @@ export const BlogService = {
         }),
         readTime: post.content ? `${Math.ceil(post.content.split(' ').length / 200)} min read` : '0 min read',
         tags: post.tags || [],
+        status: post.status,
       }));
     } catch (error) {
       console.error('Error in getPublishedPosts:', error);
@@ -123,10 +139,14 @@ export const BlogService = {
   },
   
   // Get a single post by slug
-  getPostBySlug: async (slug: string): Promise<Post | null> => {
+  getPostBySlug: async (slug: string): Promise<any | null> => {
     const { data, error } = await supabase
       .from('posts')
-      .select('*')
+      .select(`
+        *,
+        author:users(full_name),
+        category:categories(name)
+      `)
       .eq('slug', slug)
       .single();
     
@@ -139,21 +159,27 @@ export const BlogService = {
   },
   
   // Create a new post
-  createPost: async (post: PostInput): Promise<Post> => {
+  createPost: async (post: PostInput): Promise<any> => {
+    const session = await supabase.auth.getSession();
+    if (!session.data.session?.user) {
+      throw new Error('Authentication required');
+    }
+
     const slug = post.title
       .toLowerCase()
       .replace(/[^\w\s-]/g, '')
       .replace(/\s+/g, '-');
       
-    const insertData: PostInsert = {
+    const insertData = {
       title: post.title,
       slug,
       content: post.content || '',
+      excerpt: post.excerpt || '',
       cover_image_url: post.cover_image_url,
-      category: post.category,
-      author: post.author,
+      category_id: post.category_id,
+      author_id: session.data.session.user.id,
       tags: post.tags,
-      draft: post.draft !== undefined ? post.draft : true,
+      status: post.status || 'draft',
       published_at: post.published_at ? post.published_at.toISOString() : null,
     };
     
@@ -172,15 +198,15 @@ export const BlogService = {
   },
   
   // Update an existing post
-  updatePost: async (id: string, post: Partial<PostInput>): Promise<Post> => {
-    const updateData: PostUpdate = {
+  updatePost: async (id: string, post: Partial<PostInput>): Promise<any> => {
+    const updateData: any = {
       title: post.title,
       content: post.content,
+      excerpt: post.excerpt,
       cover_image_url: post.cover_image_url,
-      category: post.category,
-      author: post.author,
+      category_id: post.category_id,
       tags: post.tags,
-      draft: post.draft,
+      status: post.status,
       published_at: post.published_at ? post.published_at.toISOString() : null,
     };
     
@@ -210,6 +236,21 @@ export const BlogService = {
       console.error('Error deleting post:', error);
       throw error;
     }
+  },
+
+  // Get all categories
+  getCategories: async (): Promise<Category[]> => {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('name');
+    
+    if (error) {
+      console.error('Error fetching categories:', error);
+      throw error;
+    }
+    
+    return data || [];
   },
   
   // Upload an image to Supabase Storage

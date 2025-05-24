@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -31,14 +32,6 @@ const queryClient = new QueryClient({
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       staleTime: 5 * 60 * 1000, // 5 minutes
       refetchOnWindowFocus: false,
-      // Add error handling
-      onError: (error: any) => {
-        console.error('[Query Error]', error);
-        if (error?.status === 401 || error?.status === 403) {
-          // Redirect to auth page on unauthorized
-          window.location.href = '/auth';
-        }
-      },
     },
   },
 });
