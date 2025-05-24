@@ -1,29 +1,29 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import BlogCard from '@/components/BlogCard';
 import CategoryFilter from '@/components/CategoryFilter';
 import Footer from '@/components/Footer';
-import { blogPosts } from '@/data/blogPosts';
+import { BlogService, BlogPost } from '@/services/BlogService';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
 const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [mounted, setMounted] = useState(false);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
 
-  // This effect runs once after component mounts to avoid hydration issues with SSR
   useEffect(() => {
     setMounted(true);
+    BlogService.getPublishedPosts().then(setPosts).catch(() => setPosts([]));
   }, []);
 
   const filteredPosts = selectedCategory === 'All' 
-    ? blogPosts 
-    : blogPosts.filter(post => post.category === selectedCategory);
+    ? posts 
+    : posts.filter(post => post.category === selectedCategory);
 
-  const featuredPost = blogPosts[0];
-  const recentPosts = blogPosts.slice(1, 4); // Show only 3 recent posts on homepage
+  const featuredPost = posts.length > 0 ? posts[0] : null;
+  const recentPosts = posts.length > 1 ? posts.slice(1, 4) : [];
 
   if (!mounted) {
     return null; // Avoid rendering until after client-side hydration
@@ -45,7 +45,7 @@ const Index = () => {
               Dive deep into the latest breakthroughs and insights in AI and technology
             </p>
           </div>
-          <BlogCard post={featuredPost} featured={true} />
+          {featuredPost ? <BlogCard post={featuredPost} featured={true} /> : <p className="text-gray-500">No featured post available.</p>}
         </div>
       </section>
 
@@ -67,9 +67,9 @@ const Index = () => {
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredPosts.slice(0, 3).map((post) => (
+            {filteredPosts.slice(0, 3).map((post) => post && post.id ? (
               <BlogCard key={post.id} post={post} />
-            ))}
+            ) : null)}
           </div>
           
           {filteredPosts.length > 3 && (

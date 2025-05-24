@@ -3,21 +3,14 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from './ui/skeleton';
 
-interface ProtectedRouteProps {
+interface UserProtectedRouteProps {
   children?: React.ReactNode;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+const UserProtectedRoute: React.FC<UserProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
 
-  console.log('[ProtectedRoute] Status:', { 
-    loading, 
-    isAuthenticated: !!user, 
-    userEmail: user?.email 
-  });
-
   if (loading) {
-    console.log('[ProtectedRoute] Still loading auth state...');
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="w-full max-w-md space-y-4 p-8">
@@ -30,17 +23,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!user) {
-    console.log('[ProtectedRoute] No user found, redirecting to auth...');
     return <Navigate to="/auth" replace />;
-  }
-
-  // Only allow admin access to a specific email
-  if (user.email !== 'adarshbalmuchu@gmail.com') {
-    console.log('[ProtectedRoute] User is not admin, redirecting to home...');
-    return <Navigate to="/" replace />;
   }
 
   return children || <Outlet />;
 };
 
-export default ProtectedRoute;
+export default UserProtectedRoute;

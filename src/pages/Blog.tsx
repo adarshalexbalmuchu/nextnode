@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BlogCard from '@/components/BlogCard';
 import CategoryFilter from '@/components/CategoryFilter';
-import { blogPosts } from '@/data/blogPosts';
+import { BlogService, BlogPost } from '@/services/BlogService';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 const Blog = () => {
@@ -13,9 +12,14 @@ const Blog = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 6;
+  const [posts, setPosts] = React.useState<BlogPost[]>([]);
+
+  React.useEffect(() => {
+    BlogService.getPublishedPosts().then(setPosts).catch(() => setPosts([]));
+  }, []);
 
   // Filter posts based on category and search query
-  const filteredPosts = blogPosts.filter(post => {
+  const filteredPosts = posts.filter(post => {
     const matchesCategory = selectedCategory === 'All' || post.category === selectedCategory;
     const matchesSearch = searchQuery === '' || 
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -77,9 +81,9 @@ const Blog = () => {
           {filteredPosts.length > 0 ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {currentPosts.map((post) => (
+                {currentPosts.map((post) => post && post.id ? (
                   <BlogCard key={post.id} post={post} />
-                ))}
+                ) : null)}
               </div>
               
               {/* Pagination */}

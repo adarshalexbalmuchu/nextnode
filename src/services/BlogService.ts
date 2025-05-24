@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface PostInput {
@@ -39,15 +38,39 @@ export interface ServiceError extends Error {
   details?: unknown;
 }
 
+// Supabase DB types for posts and categories
+interface PostRow {
+  id: string;
+  title: string;
+  slug: string;
+  content: string | null;
+  excerpt: string | null;
+  cover_image_url: string | null;
+  category_id: string | null;
+  author_id: string;
+  tags: string[] | null;
+  status: string;
+  published_at: string | null;
+  created_at: string;
+  // joined fields
+  author?: { full_name?: string };
+  category?: { name?: string };
+}
+
+interface CategoryRow {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+}
+
 export const BlogService = {
   // Get all posts (published and drafts) - requires admin access
-  getAllPosts: async (): Promise<any[]> => {
-    console.log('[BlogService] Starting getAllPosts');
+  getAllPosts: async (): Promise<PostRow[]> => {
     try {
       // First check user session
       const session = await supabase.auth.getSession();
       if (!session.data.session?.user) {
-        console.error('[BlogService] No authenticated user');
         throw new Error('Authentication required');
       }
 
@@ -55,16 +78,12 @@ export const BlogService = {
       const { data: userRole, error: roleError } = await supabase
         .rpc('get_user_role', { user_id: session.data.session.user.id });
       
-      console.log('[BlogService] User role:', userRole);
-      
       if (roleError) {
-        console.error('[BlogService] Error fetching user role:', roleError);
         throw new Error('Error fetching user permissions');
       }
       
       // Allow admin and author roles
       if (!userRole || !['admin', 'author'].includes(userRole)) {
-        console.error('[BlogService] Unauthorized role:', userRole);
         throw new Error('Insufficient permissions - admin or author role required');
       }
 
@@ -79,15 +98,12 @@ export const BlogService = {
         .order('created_at', { ascending: false });
       
       if (error) {
-        console.error('[BlogService] Error fetching posts:', error);
         throw error;
       }
       
-      console.log('[BlogService] Successfully fetched posts:', data?.length ?? 0);
-      return data || [];
+      return (data as PostRow[]) || [];
 
     } catch (error) {
-      console.error('[BlogService] Error in getAllPosts:', error);
       throw error;
     }
   },
@@ -97,22 +113,17 @@ export const BlogService = {
     try {
       const { data, error } = await supabase
         .from('posts')
-        .select(`
-          *,
-          author:users(full_name),
-          category:categories(name)
-        `)
+        .select(`*, author:users(full_name), category:categories(name)`)
         .eq('status', 'published')
         .not('published_at', 'is', null)
         .lte('published_at', new Date().toISOString())
         .order('published_at', { ascending: false });
       
       if (error) {
-        console.error('Error fetching posts:', error);
         throw error;
       }
       
-      return (data as any[]).map((post) => ({
+      return (data as PostRow[]).map((post) => ({
         id: post.id,
         title: post.title,
         slug: post.slug,
@@ -121,43 +132,62 @@ export const BlogService = {
         coverImage: post.cover_image_url || '',
         category: post.category?.name || '',
         author: post.author?.full_name || 'Unknown',
-        publishDate: new Date(post.published_at || '').toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        }),
+        publishDate: post.published_at ? new Date(post.published_at).toLocaleDateString('en-US', {
+          year: 'numeric', month: 'long', day: 'numeric',
+        }) : '',
         readTime: post.content ? `${Math.ceil(post.content.split(' ').length / 200)} min read` : '0 min read',
         tags: post.tags || [],
         status: post.status,
       }));
     } catch (error) {
-      console.error('Error in getPublishedPosts:', error);
       throw error;
     }
   },
   
   // Get a single post by slug
-  getPostBySlug: async (slug: string): Promise<any | null> => {
-    const { data, error } = await supabase
+  getPostBySlug: async (slug: string): Promise<BlogPost | null> => {
+    // Try to fetch by slug, fallback to id if not found
+    let { data, error } = await supabase
       .from('posts')
-      .select(`
-        *,
-        author:users(full_name),
-        category:categories(name)
-      `)
+      .select(`*, author:users(full_name), category:categories(name)`)
       .eq('slug', slug)
       .single();
-    
-    if (error) {
-      console.error('Error fetching post:', error);
-      throw error;
+
+    // If not found and slug looks like a UUID, try by id
+    if ((error && error.code === 'PGRST116') || (!data && /^[0-9a-fA-F-]{36}$/.test(slug))) {
+      ({ data, error } = await supabase
+        .from('posts')
+        .select(`*, author:users(full_name), category:categories(name)`)
+        .eq('id', slug)
+        .single());
     }
-    
-    return data;
+
+    if (error || !data) {
+      return null;
+    }
+
+    const post = data as PostRow;
+    // Map to BlogPost shape
+    return {
+      id: post.id,
+      title: post.title,
+      slug: post.slug,
+      content: post.content || '',
+      excerpt: post.excerpt || '',
+      coverImage: post.cover_image_url || '',
+      category: post.category?.name || '',
+      author: post.author?.full_name || 'Unknown',
+      publishDate: post.published_at ? new Date(post.published_at).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric',
+      }) : '',
+      readTime: post.content ? `${Math.ceil(post.content.split(' ').length / 200)} min read` : '0 min read',
+      tags: post.tags || [],
+      status: post.status,
+    };
   },
   
   // Create a new post
-  createPost: async (post: PostInput): Promise<any> => {
+  createPost: async (post: PostInput): Promise<PostRow> => {
     const session = await supabase.auth.getSession();
     if (!session.data.session?.user) {
       throw new Error('Authentication required');
@@ -188,16 +218,15 @@ export const BlogService = {
       .single();
     
     if (error) {
-      console.error('Error creating post:', error);
       throw error;
     }
     
-    return data;
+    return data as PostRow;
   },
   
   // Update an existing post
-  updatePost: async (id: string, post: Partial<PostInput>): Promise<any> => {
-    const updateData: any = {
+  updatePost: async (id: string, post: Partial<PostInput>): Promise<PostRow> => {
+    const updateData: Partial<PostRow> = {
       title: post.title,
       content: post.content,
       excerpt: post.excerpt,
@@ -216,11 +245,10 @@ export const BlogService = {
       .single();
       
     if (error) {
-      console.error('Error updating post:', error);
       throw error;
     }
     
-    return data;
+    return data as PostRow;
   },
   
   // Delete a post
@@ -231,7 +259,6 @@ export const BlogService = {
       .eq('id', id);
       
     if (error) {
-      console.error('Error deleting post:', error);
       throw error;
     }
   },
@@ -245,19 +272,16 @@ export const BlogService = {
         .order('name');
       
       if (error) {
-        console.error('Error fetching categories:', error);
         throw error;
       }
       
-      // Ensure we return the correct type by mapping the data
-      return (data || []).map((category: any) => ({
+      return (data as CategoryRow[]).map((category) => ({
         id: category.id,
         name: category.name,
         slug: category.slug,
         description: category.description || undefined,
       }));
     } catch (error) {
-      console.error('Error in getCategories:', error);
       throw error;
     }
   },
@@ -272,7 +296,6 @@ export const BlogService = {
       .upload(fileName, file);
       
     if (uploadError) {
-      console.error('Error uploading image:', uploadError);
       throw uploadError;
     }
     

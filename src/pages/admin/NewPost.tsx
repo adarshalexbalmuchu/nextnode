@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ImageIcon, Plus, Save, EyeIcon, Calendar, Loader2 } from 'lucide-react';
@@ -20,9 +20,20 @@ const NewPost = () => {
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  // Fetch categories from Supabase on component mount
+  useEffect(() => {
+    BlogService.getCategories()
+      .then((cats) => setCategories(cats))
+      .catch((err) => {
+        toast.error('Failed to load categories');
+        setCategories([]);
+      });
+  }, []);
   
   // Handle image upload to Supabase Storage
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,8 +45,8 @@ const NewPost = () => {
         const imageUrl = await BlogService.uploadImage(file);
         setCoverImage(imageUrl);
         toast.success('Image uploaded successfully');
-      } catch (error: any) {
-        toast.error(error.message || 'Error uploading image');
+      } catch (error) {
+        toast.error((error as Error).message || 'Error uploading image');
         console.error('Error uploading image:', error);
       } finally {
         setImageUploading(false);
@@ -73,8 +84,8 @@ const NewPost = () => {
       
       toast.success('Draft saved successfully');
       navigate('/admin/dashboard');
-    } catch (error: any) {
-      toast.error(error.message || 'Error saving draft');
+    } catch (error) {
+      toast.error((error as Error).message || 'Error saving draft');
       console.error('Error saving draft:', error);
     } finally {
       setIsSubmitting(false);
@@ -110,8 +121,8 @@ const NewPost = () => {
       
       toast.success('Post published successfully');
       navigate('/admin/dashboard');
-    } catch (error: any) {
-      toast.error(error.message || 'Error publishing post');
+    } catch (error) {
+      toast.error((error as Error).message || 'Error publishing post');
       console.error('Error publishing post:', error);
     } finally {
       setIsSubmitting(false);
@@ -233,11 +244,9 @@ const NewPost = () => {
                   className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value="">Select a category</option>
-                  <option value="ai-machine-learning">AI & Machine Learning</option>
-                  <option value="technology">Technology</option>
-                  <option value="web-development">Web Development</option>
-                  <option value="data-science">Data Science</option>
-                  <option value="devops">DevOps</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
                 </select>
               </CardContent>
             </Card>

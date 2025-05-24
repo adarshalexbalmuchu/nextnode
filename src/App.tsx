@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +11,8 @@ import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import UserDashboard from './pages/UserDashboard';
+import UserProtectedRoute from './components/UserProtectedRoute';
 
 // Lazy load admin routes
 const Auth = lazy(() => import("./pages/Auth"));
@@ -21,12 +22,15 @@ const NewPost = lazy(() => import("./pages/admin/NewPost"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: (failureCount, error: any) => {
-        // Don't retry on 401/403 errors
-        if (error?.status === 401 || error?.status === 403) {
+      retry: (failureCount, error: unknown) => {
+        if (
+          typeof error === 'object' &&
+          error !== null &&
+          'status' in error &&
+          (Number((error as { status?: number }).status) === 401 || Number((error as { status?: number }).status) === 403)
+        ) {
           return false;
         }
-        // Retry other errors up to 3 times
         return failureCount < 3;
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
@@ -103,6 +107,14 @@ const App = () => {
                       </Suspense>
                     } 
                   />
+                </Route>
+
+                {/* Protected User Dashboard Route */}
+                <Route 
+                  path="/user"
+                  element={<UserProtectedRoute />} 
+                >
+                  <Route index element={<UserDashboard />} />
                 </Route>
                 
                 {/* 404 - Not Found */}

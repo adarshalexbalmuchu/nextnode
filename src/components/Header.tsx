@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Menu, X } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
-import { 
+import { useAuth } from '@/contexts/AuthContext';
+import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
@@ -15,6 +16,7 @@ import {
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -99,7 +101,7 @@ const Header = () => {
             </NavigationMenu>
           </div>
 
-          {/* Search, Theme Toggle and Admin */}
+          {/* Search, Theme Toggle and User/Admin */}
           <div className="flex items-center space-x-4">
             <button className="text-gray-500 hover:text-teal-600 transition-colors dark:text-gray-400 dark:hover:text-teal-400">
               <Search size={20} />
@@ -107,12 +109,22 @@ const Header = () => {
             
             <ThemeToggle />
             
-            <Link
-              to="/admin/dashboard"
-              className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors"
-            >
-              Admin
-            </Link>
+            {user && user.email === 'adarshbalmuchu@gmail.com' && (
+              <Link
+                to="/admin/dashboard"
+                className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors"
+              >
+                Admin
+              </Link>
+            )}
+            {user && user.email !== 'adarshbalmuchu@gmail.com' && (
+              <Link
+                to="/user"
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Account
+              </Link>
+            )}
             
             {/* Mobile Menu Button */}
             <button
