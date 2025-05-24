@@ -1,25 +1,10 @@
+
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { debounce } from '@/utils/debounce';t React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-
-// Add debounce utility
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: ReturnType<typeof setTimeout>;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-}
+import { debounce } from '@/utils/debounce';
 
 interface AuthContextProps {
   session: Session | null;
@@ -44,7 +29,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       // First check if profile exists
       const { data: existingProfile, error: fetchError } = await supabase
-        .from('profiles')
+        .from('users')
         .select('role')
         .eq('id', session.user.id)
         .single();
@@ -56,7 +41,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       const role = existingProfile?.role ?? 'author';
       
-      const { error } = await supabase.from('profiles').upsert({
+      const { error } = await supabase.from('users').upsert({
         id: session.user.id,
         email: session.user.email,
         full_name: session.user.user_metadata.full_name,
