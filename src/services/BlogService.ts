@@ -64,7 +64,7 @@ export const BlogService = {
 
       // Finally fetch posts with author and category info using raw query
       const { data, error } = await supabase
-        .from('posts' as any)
+        .from('posts')
         .select(`
           *,
           author:users(full_name),
@@ -90,7 +90,7 @@ export const BlogService = {
   getPublishedPosts: async (): Promise<BlogPost[]> => {
     try {
       const { data, error } = await supabase
-        .from('posts' as any)
+        .from('posts')
         .select(`
           *,
           author:users(full_name),
@@ -133,7 +133,7 @@ export const BlogService = {
   // Get a single post by slug
   getPostBySlug: async (slug: string): Promise<any | null> => {
     const { data, error } = await supabase
-      .from('posts' as any)
+      .from('posts')
       .select(`
         *,
         author:users(full_name),
@@ -176,7 +176,7 @@ export const BlogService = {
     };
     
     const { data, error } = await supabase
-      .from('posts' as any)
+      .from('posts')
       .insert(insertData)
       .select()
       .single();
@@ -203,7 +203,7 @@ export const BlogService = {
     };
     
     const { data, error } = await supabase
-      .from('posts' as any)
+      .from('posts')
       .update(updateData)
       .eq('id', id)
       .select()
@@ -220,7 +220,7 @@ export const BlogService = {
   // Delete a post
   deletePost: async (id: string): Promise<void> => {
     const { error } = await supabase
-      .from('posts' as any)
+      .from('posts')
       .delete()
       .eq('id', id);
       
@@ -232,17 +232,28 @@ export const BlogService = {
 
   // Get all categories
   getCategories: async (): Promise<Category[]> => {
-    const { data, error } = await supabase
-      .from('categories' as any)
-      .select('*')
-      .order('name');
-    
-    if (error) {
-      console.error('Error fetching categories:', error);
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+      
+      if (error) {
+        console.error('Error fetching categories:', error);
+        throw error;
+      }
+      
+      // Ensure we return the correct type by mapping the data
+      return (data || []).map((category: any) => ({
+        id: category.id,
+        name: category.name,
+        slug: category.slug,
+        description: category.description || undefined,
+      }));
+    } catch (error) {
+      console.error('Error in getCategories:', error);
       throw error;
     }
-    
-    return data || [];
   },
   
   // Upload an image to Supabase Storage
