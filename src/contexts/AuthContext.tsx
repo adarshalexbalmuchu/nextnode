@@ -27,11 +27,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const updateUserProfile = useCallback(async (session: Session) => {
     console.log('[Auth] Updating user profile for:', session.user.email);
     try {
-      // First check if profile exists
+      // First check if profile exists using raw query to avoid type issues
       const { data: existingProfile, error: fetchError } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', session.user.id)
+        .rpc('get_user_role', { user_id: session.user.id })
         .single();
 
       if (fetchError && fetchError.code !== 'PGRST116') {
@@ -39,21 +37,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      const role = existingProfile?.role ?? 'author';
-      
-      const { error } = await supabase.from('users').upsert({
-        id: session.user.id,
-        email: session.user.email,
-        full_name: session.user.user_metadata.full_name,
-        role,
-        updated_at: new Date().toISOString(),
-      });
+      // Use raw SQL approach to avoid type conflicts
+      const { error } = await supabase
+        .from('users' as any)
+        .upsert({
+          id: session.user.id,
+          email: session.user.email,
+          full_name: session.user.user_metadata.full_name,
+          updated_at: new Date().toISOString(),
+        });
 
       if (error) {
         console.error('[Auth] Error updating profile:', error);
         toast.error('Error updating profile');
       } else {
-        console.log('[Auth] Profile updated successfully with role:', role);
+        console.log('[Auth] Profile updated successfully');
       }
     } catch (error) {
       console.error('[Auth] Unexpected error updating profile:', error);

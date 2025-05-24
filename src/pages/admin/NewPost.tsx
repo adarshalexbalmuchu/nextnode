@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ImageIcon, Plus, Save, EyeIcon, Calendar, Loader2 } from 'lucide-react';
@@ -14,7 +13,7 @@ const NewPost = () => {
   const [content, setContent] = useState('');
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
-  const [category, setCategory] = useState('');
+  const [categoryId, setCategoryId] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [excerpt, setExcerpt] = useState('');
@@ -67,10 +66,9 @@ const NewPost = () => {
         title,
         content,
         cover_image_url: coverImage || undefined,
-        category: category || undefined,
-        author: user?.user_metadata?.full_name || 'Anonymous',
+        category_id: categoryId || undefined,
         tags,
-        draft: true,
+        status: 'draft',
       });
       
       toast.success('Draft saved successfully');
@@ -93,7 +91,7 @@ const NewPost = () => {
   };
   
   const handlePublish = async () => {
-    if (!title || !content || !category) {
+    if (!title || !content || !categoryId) {
       toast.error('Please fill all required fields');
       return;
     }
@@ -104,10 +102,9 @@ const NewPost = () => {
         title,
         content,
         cover_image_url: coverImage || undefined,
-        category,
-        author: user?.user_metadata?.full_name || 'Anonymous',
+        category_id: categoryId,
         tags,
-        draft: false,
+        status: 'published',
         published_at: new Date(),
       });
       
@@ -231,16 +228,16 @@ const NewPost = () => {
               <CardContent className="p-4">
                 <h3 className="font-medium mb-2">Category</h3>
                 <select 
-                  value={category} 
-                  onChange={(e) => setCategory(e.target.value)}
+                  value={categoryId} 
+                  onChange={(e) => setCategoryId(e.target.value)}
                   className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value="">Select a category</option>
-                  <option value="AI Innovations">AI Innovations</option>
-                  <option value="Technology News">Technology News</option>
-                  <option value="Industry Insights">Industry Insights</option>
-                  <option value="Machine Learning">Machine Learning</option>
-                  <option value="Data Science">Data Science</option>
+                  <option value="ai-machine-learning">AI & Machine Learning</option>
+                  <option value="technology">Technology</option>
+                  <option value="web-development">Web Development</option>
+                  <option value="data-science">Data Science</option>
+                  <option value="devops">DevOps</option>
                 </select>
               </CardContent>
             </Card>

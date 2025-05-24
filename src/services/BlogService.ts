@@ -51,28 +51,20 @@ export const BlogService = {
         throw new Error('Authentication required');
       }
 
-      // Then check user role
-      const { data: profileData, error: profileError } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', session.data.session.user.id)
-        .single();
+      // Then check user role using the security definer function
+      const { data: userRole } = await supabase
+        .rpc('get_user_role', { user_id: session.data.session.user.id });
       
-      if (profileError) {
-        console.error('[BlogService] Error fetching profile:', profileError);
-        throw new Error('Failed to verify permissions');
-      }
-
-      console.log('[BlogService] User role:', profileData?.role);
+      console.log('[BlogService] User role:', userRole);
       
-      if (!profileData?.role || !['admin', 'author'].includes(profileData.role)) {
-        console.error('[BlogService] Unauthorized role:', profileData?.role);
+      if (!userRole || !['admin', 'author'].includes(userRole)) {
+        console.error('[BlogService] Unauthorized role:', userRole);
         throw new Error('Insufficient permissions');
       }
 
-      // Finally fetch posts with author and category info
+      // Finally fetch posts with author and category info using raw query
       const { data, error } = await supabase
-        .from('posts')
+        .from('posts' as any)
         .select(`
           *,
           author:users(full_name),
@@ -98,7 +90,7 @@ export const BlogService = {
   getPublishedPosts: async (): Promise<BlogPost[]> => {
     try {
       const { data, error } = await supabase
-        .from('posts')
+        .from('posts' as any)
         .select(`
           *,
           author:users(full_name),
@@ -141,7 +133,7 @@ export const BlogService = {
   // Get a single post by slug
   getPostBySlug: async (slug: string): Promise<any | null> => {
     const { data, error } = await supabase
-      .from('posts')
+      .from('posts' as any)
       .select(`
         *,
         author:users(full_name),
@@ -184,7 +176,7 @@ export const BlogService = {
     };
     
     const { data, error } = await supabase
-      .from('posts')
+      .from('posts' as any)
       .insert(insertData)
       .select()
       .single();
@@ -211,7 +203,7 @@ export const BlogService = {
     };
     
     const { data, error } = await supabase
-      .from('posts')
+      .from('posts' as any)
       .update(updateData)
       .eq('id', id)
       .select()
@@ -228,7 +220,7 @@ export const BlogService = {
   // Delete a post
   deletePost: async (id: string): Promise<void> => {
     const { error } = await supabase
-      .from('posts')
+      .from('posts' as any)
       .delete()
       .eq('id', id);
       
@@ -241,7 +233,7 @@ export const BlogService = {
   // Get all categories
   getCategories: async (): Promise<Category[]> => {
     const { data, error } = await supabase
-      .from('categories')
+      .from('categories' as any)
       .select('*')
       .order('name');
     

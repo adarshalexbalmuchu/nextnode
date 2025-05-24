@@ -1,16 +1,16 @@
-import React, { Suspense, lazy, useMemo } from 'react';
+
+import React, { Suspense, lazy, useMemo, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Bell, Activity, FileText, Users } from 'lucide-react';
+import { Bell, Activity, FileText } from 'lucide-react';
 import { LineChart } from '@/components/ui/chart';
 import { useQuery } from '@tanstack/react-query';
 import { BlogService } from '@/services/BlogService';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Post {
   author: string;
@@ -18,7 +18,7 @@ interface Post {
   content: string;
   cover_image_url: string;
   created_at: string;
-  draft: boolean;
+  status: string;
   id: string;
   published_at: string;
   slug: string;
@@ -175,8 +175,8 @@ const Dashboard = () => {
   // Ensure post data is properly typed and handle loading state
   const postsData = posts ?? [];
   const totalPosts = postsData.length;
-  const publishedPosts = postsData.filter(post => !post.draft).length;
-  const draftPosts = postsData.filter(post => post.draft).length;
+  const publishedPosts = postsData.filter(post => post.status === 'published').length;
+  const draftPosts = postsData.filter(post => post.status === 'draft').length;
 
   return (
     <AdminLayout>
