@@ -13,6 +13,8 @@ import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UserDashboard from './pages/UserDashboard';
 import UserProtectedRoute from './components/UserProtectedRoute';
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsAndConditions from "./pages/TermsAndConditions";
 
 // Lazy load admin routes
 const Auth = lazy(() => import("./pages/Auth"));
@@ -76,8 +78,8 @@ const App = () => {
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
                 <Route path="/about" element={<About />} />
-                <Route path="/privacy-policy" element={<About />} />
-                <Route path="/terms" element={<About />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
                 
                 {/* Auth Routes */}
                 <Route path="/auth" element={<Auth />} />

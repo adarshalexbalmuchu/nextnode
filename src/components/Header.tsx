@@ -36,7 +36,7 @@ const Header = () => {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <Link to="/">
-              <div className="h-10 w-auto font-bold text-xl">
+              <div className="h-12 w-auto font-extrabold text-3xl tracking-tight text-teal-600 dark:text-teal-400 drop-shadow-lg" style={{letterSpacing: '0.05em', fontFamily: 'Montserrat, Arial, sans-serif'}}>
                 NextNode
               </div>
             </Link>
@@ -126,6 +126,16 @@ const Header = () => {
               </Link>
             )}
             
+            {/* Auth Buttons */}
+            {!user && (
+              <Link
+                to="/auth"
+                className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors"
+              >
+                Login / Register
+              </Link>
+            )}
+            
             {/* Mobile Menu Button */}
             <button
               className="ml-2 md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
@@ -180,6 +190,17 @@ const Header = () => {
                 ))}
               </div>
             </div>
+
+            {/* Auth Buttons */}
+            {!user && (
+              <Link
+                to="/auth"
+                className="block px-3 py-2 rounded-md text-base font-medium text-white bg-teal-600 hover:bg-teal-700 mt-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Login / Register
+              </Link>
+            )}
           </div>
         </div>
       )}
