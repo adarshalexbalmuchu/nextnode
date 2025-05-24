@@ -52,18 +52,23 @@ export const BlogService = {
       }
 
       // Then check user role using the security definer function
-      const { data: userRole } = await supabase
+      const { data: userRole, error: roleError } = await supabase
         .rpc('get_user_role', { user_id: session.data.session.user.id });
       
       console.log('[BlogService] User role:', userRole);
       
-      // Allow admin, author, and user roles for now (since your account has 'user' role)
-      if (!userRole || !['admin', 'author', 'user'].includes(userRole)) {
+      if (roleError) {
+        console.error('[BlogService] Error fetching user role:', roleError);
+        throw new Error('Error fetching user permissions');
+      }
+      
+      // Allow admin and author roles
+      if (!userRole || !['admin', 'author'].includes(userRole)) {
         console.error('[BlogService] Unauthorized role:', userRole);
-        throw new Error('Insufficient permissions');
+        throw new Error('Insufficient permissions - admin or author role required');
       }
 
-      // Finally fetch posts with author and category info using raw query
+      // Finally fetch posts with author and category info
       const { data, error } = await supabase
         .from('posts')
         .select(`

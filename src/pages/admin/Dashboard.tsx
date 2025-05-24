@@ -94,7 +94,7 @@ const Dashboard = () => {
     },
   }), []);
 
-  // Fetch posts data with error handling
+  // Fetch posts data with proper error handling and no retries on permission errors
   const { data: posts, isLoading: postsLoading, error: postsError } = useQuery<Post[], QueryError>({
     queryKey: ['admin-posts'],
     queryFn: async () => {
@@ -108,8 +108,16 @@ const Dashboard = () => {
         throw error;
       }
     },
-    retry: 1, // Reduce retry attempts
+    retry: (failureCount, error: any) => {
+      // Don't retry on permission errors
+      if (error?.message?.includes('Insufficient permissions') || 
+          error?.message?.includes('Authentication required')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
     staleTime: 30000, // Cache for 30 seconds
+    refetchOnWindowFocus: false,
   });
 
   console.log('[Dashboard] Render state:', { postsLoading, postsError, postsCount: posts?.length });
@@ -137,9 +145,14 @@ const Dashboard = () => {
               <CardTitle className="text-red-500">Error Loading Dashboard</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600">
+              <p className="text-gray-600 mb-4">
                 {postsError instanceof Error ? postsError.message : 'Failed to load dashboard data'}
               </p>
+              {postsError instanceof Error && postsError.message.includes('Insufficient permissions') && (
+                <p className="text-sm text-gray-500 mb-4">
+                  You may need admin or author permissions to access the dashboard.
+                </p>
+              )}
               <Button 
                 onClick={() => window.location.reload()} 
                 className="mt-4"
