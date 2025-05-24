@@ -1,24 +1,27 @@
-
-import React from 'react';
+import React, { useState, useEffect, memo } from 'react';
 
 const Clock: React.FC<{ className?: string }> = ({ className }) => {
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      className={className} 
-      width="24" 
-      height="24" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10"/>
-      <polyline points="12 6 12 12 16 14"/>
-    </svg>
+    <div className={className}>
+      <div className="text-3xl font-bold">
+        {time.toLocaleTimeString()}
+      </div>
+      <div className="text-sm text-gray-500">
+        {time.toLocaleDateString()}
+      </div>
+    </div>
   );
 };
 
-export default Clock;
+// Memoize the component since it updates frequently
+export default memo(Clock);

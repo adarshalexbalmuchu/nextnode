@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -19,12 +18,7 @@ const Auth = () => {
   
   const { user, signIn, signUp } = useAuth();
   
-  // Redirect if user is already logged in
-  if (user) {
-    return <Navigate to="/admin/dashboard" />;
-  }
-  
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
@@ -38,10 +32,15 @@ const Auth = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [activeTab, email, password, fullName, signIn, signUp, setActiveTab]);
+  
+  // Redirect if user is already logged in
+  if (user) {
+    return <Navigate to="/admin/dashboard" />;
+  }
   
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <Header />
       
       <main className="flex-grow flex items-center justify-center px-4 py-12">
@@ -49,7 +48,7 @@ const Auth = () => {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">NextNode Admin</CardTitle>
             <CardDescription className="text-center">
-              Sign in to access the admin dashboard
+              {activeTab === 'login' ? 'Sign in to access the admin dashboard' : 'Create a new account'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -59,76 +58,95 @@ const Auth = () => {
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
               </TabsList>
               
-              <form onSubmit={handleSubmit}>
-                <TabsContent value="login" className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium">Email</label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label htmlFor="password" className="text-sm font-medium">Password</label>
-                      <button type="button" className="text-xs text-teal-600 hover:underline">
-                        Forgot password?
-                      </button>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <TabsContent value="login">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label htmlFor="email" className="text-sm font-medium">Email</label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        className="w-full"
+                      />
                     </div>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label htmlFor="password" className="text-sm font-medium">Password</label>
+                        <button 
+                          type="button" 
+                          className="text-xs text-teal-600 hover:underline"
+                          onClick={() => setActiveTab('signup')}
+                        >
+                          Need an account?
+                        </button>
+                      </div>
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        className="w-full"
+                      />
+                    </div>
                   </div>
                 </TabsContent>
                 
-                <TabsContent value="signup" className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="full-name" className="text-sm font-medium">Full Name</label>
-                    <Input
-                      id="full-name"
-                      type="text"
-                      placeholder="John Doe"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="email-signup" className="text-sm font-medium">Email</label>
-                    <Input
-                      id="email-signup"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="password-signup" className="text-sm font-medium">Password</label>
-                    <Input
-                      id="password-signup"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
+                <TabsContent value="signup">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label htmlFor="full-name" className="text-sm font-medium">Full Name</label>
+                      <Input
+                        id="full-name"
+                        type="text"
+                        placeholder="John Doe"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="email-signup" className="text-sm font-medium">Email</label>
+                      <Input
+                        id="email-signup"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="password-signup" className="text-sm font-medium">Password</label>
+                      <Input
+                        id="password-signup"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        minLength={6}
+                        className="w-full"
+                      />
+                    </div>
                   </div>
                 </TabsContent>
                 
                 <Button
                   type="submit"
-                  className="w-full mt-6"
+                  className="w-full"
                   disabled={isLoading}
                 >
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

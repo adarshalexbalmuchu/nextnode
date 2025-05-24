@@ -1,151 +1,177 @@
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Bell, FileText, Home, LayoutDashboard, LogOut, Menu, Moon, Plus, Settings, Sun, User, X } from 'lucide-react';
+import { 
+  Bell, FileText, Home, LayoutDashboard, LogOut, 
+  Menu, Moon, Plus, Settings, Sun, User, X 
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
-const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+const AdminLayout: React.FC<AdminLayoutProps> = React.memo(({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
+  const location = useLocation();
+  const { signOut, user, loading } = useAuth();
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+  useEffect(() => {
+    // If there's no user and we're done loading, redirect to auth
+    if (!loading && !user) {
+      console.log('[AdminLayout] No user found, redirecting to auth...');
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
 
-  const toggleTheme = () => {
-    setDarkMode(!darkMode);
-    // In a real implementation, we would update the theme here
-  };
+  // Memoize menu items
+  const menuItems = useMemo(() => [
+    { icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/admin/dashboard' },
+    { icon: <Plus size={20} />, label: 'New Post', path: '/admin/new-post' },
+    { icon: <Home size={20} />, label: 'View Site', path: '/' },
+  ], []);
 
-  const handleLogout = async () => {
-    await signOut();
-  };
+  // Memoize handlers
+  const handleLogout = useCallback(async () => {
+    try {
+      console.log('[AdminLayout] Signing out...');
+      await signOut();
+      navigate('/auth');
+    } catch (error) {
+      console.error('[AdminLayout] Error signing out:', error);
+    }
+  }, [signOut, navigate]);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setDarkMode(prev => {
+      const newMode = !prev;
+      localStorage.setItem('theme', newMode ? 'dark' : 'light');
+      document.documentElement.classList.toggle('dark', newMode);
+      return newMode;
+    });
+  }, []);
+
+  const handleNavigation = useCallback((path: string) => {
+    console.log('[AdminLayout] Navigating to:', path);
+    navigate(path);
+  }, [navigate]);
+
+  // Memoize the sidebar content
+  const sidebarContent = useMemo(() => (
+    <div className="h-full px-3 py-4 overflow-y-auto bg-white dark:bg-gray-800">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold">Admin Panel</h2>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={toggleSidebar}
+          className="md:hidden"
+        >
+          <X size={20} />
+        </Button>
+      </div>
+      
+      <nav className="space-y-2">
+        {menuItems.map((item) => (
+          <Button
+            key={item.path}
+            variant={location.pathname === item.path ? "secondary" : "ghost"}
+            className="w-full justify-start gap-2"
+            onClick={() => handleNavigation(item.path)}
+          >
+            {item.icon}
+            {item.label}
+          </Button>
+        ))}
+      </nav>
+      
+      <div className="absolute bottom-0 left-0 right-0 p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <User size={20} />
+            <span className="font-medium">{user?.email}</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+          >
+            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+          </Button>
+        </div>
+        <Button 
+          variant="destructive" 
+          className="w-full gap-2"
+          onClick={handleLogout}
+        >
+          <LogOut size={20} />
+          Sign Out
+        </Button>
+      </div>
+    </div>
+  ), [menuItems, user?.email, handleLogout, handleNavigation, toggleSidebar, toggleTheme, darkMode, location.pathname]);
+
+  useEffect(() => {
+    console.log('[AdminLayout] Mount state:', { loading, user: !!user });
+  }, [loading, user]);
+
+  if (loading) {
+    console.log('[AdminLayout] Showing loading state');
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`min-h-screen bg-gray-100 ${darkMode ? 'dark' : ''}`}>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:relative md:translate-x-0`}
-      >
-        <div className="flex items-center justify-between h-16 px-6 border-b">
-          <img 
-            src="/lovable-uploads/28434454-94ec-467d-9440-689c1e5c6005.png" 
-            alt="NextNode" 
-            className="h-8 w-auto"
-          />
-          <button 
-            onClick={toggleSidebar}
-            className="md:hidden text-gray-500 hover:text-gray-700"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <nav className="p-4 space-y-1">
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start"
-            onClick={() => navigate('/admin/dashboard')}
-          >
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            Dashboard
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start"
-            onClick={() => navigate('/admin/new-post')}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            New Post
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start"
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            All Posts
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start"
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </Button>
-          
-          <div className="pt-4 mt-4 border-t border-gray-200">
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start"
-              onClick={() => navigate('/')}
-            >
-              <Home className="mr-2 h-4 w-4" />
-              View Site
-            </Button>
-            
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
-              onClick={handleLogout}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
-          </div>
-        </nav>
+      <aside className={`fixed top-0 left-0 z-40 w-64 h-screen transition-transform ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        {sidebarContent}
       </aside>
 
-      {/* Main Content */}
-      <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : ''}`}>
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 sticky top-0 z-40">
-          <div className="flex items-center">
-            <button 
+      {/* Main content */}
+      <div className={`transition-margin duration-300 ${
+        sidebarOpen ? 'md:ml-64' : 'ml-0'
+      }`}>
+        <header className="bg-white dark:bg-gray-800 shadow">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={toggleSidebar}
-              className="text-gray-500 hover:text-gray-700 focus:outline-none"
             >
               <Menu size={20} />
-            </button>
-            <h1 className="ml-4 text-lg font-medium">Admin Dashboard</h1>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <button className="text-gray-500 hover:text-gray-700 relative">
-              <Bell size={20} />
-              <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
-            </button>
+            </Button>
             
-            <button onClick={toggleTheme} className="text-gray-500 hover:text-gray-700">
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-            
-            <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white">
-                <User size={16} />
-              </div>
+            <div className="flex items-center space-x-2">
+              <Button variant="ghost" size="icon">
+                <Bell size={20} />
+              </Button>
+              <Button variant="ghost" size="icon">
+                <Settings size={20} />
+              </Button>
             </div>
           </div>
         </header>
 
-        {/* Main Content */}
-        <main>
+        <main className="p-4">
           {children}
         </main>
       </div>
     </div>
   );
-};
+});
+
+AdminLayout.displayName = 'AdminLayout';
 
 export default AdminLayout;

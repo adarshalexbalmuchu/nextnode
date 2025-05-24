@@ -1,8 +1,25 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { debounce } from '@/utils/debounce';t React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
+// Add debounce utility
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
 
 interface AuthContextProps {
   session: Session | null;
@@ -21,68 +38,149 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Memoize profile update function
+  const updateUserProfile = useCallback(async (session: Session) => {
+    console.log('[Auth] Updating user profile for:', session.user.email);
+    try {
+      // First check if profile exists
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('[Auth] Error fetching profile:', fetchError);
+        return;
+      }
+
+      const role = existingProfile?.role ?? 'author';
+      
+      const { error } = await supabase.from('profiles').upsert({
+        id: session.user.id,
+        email: session.user.email,
+        full_name: session.user.user_metadata.full_name,
+        role,
+        updated_at: new Date().toISOString(),
+      });
+
+      if (error) {
+        console.error('[Auth] Error updating profile:', error);
+        toast.error('Error updating profile');
+      } else {
+        console.log('[Auth] Profile updated successfully with role:', role);
+      }
+    } catch (error) {
+      console.error('[Auth] Unexpected error updating profile:', error);
+    }
+  }, []);
+
+  // Debounce the profile update
+  const debouncedProfileUpdate = useMemo(
+    () => debounce(async (session: Session) => {
+      await updateUserProfile(session);
+      setLoading(false);
+    }, 100),
+    [updateUserProfile]
+  );
+
+  // Memoize auth state handler
+  const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
+    console.log('[Auth] Auth state changed:', event, session?.user?.email);
+    
+    setSession(session);
+    setUser(session?.user ?? null);
+
+    if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+      await debouncedProfileUpdate(session);
+    } else {
+      setLoading(false);
+    }
+  }, [debouncedProfileUpdate]);
+
   useEffect(() => {
+    console.log('[Auth] Setting up auth state listener');
+    
+    let mounted = true;
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        // Create or update profile when user signs up or signs in
-        if (session?.user && (event === 'SIGNED_IN' || event === 'SIGNED_UP')) {
-          const { error } = await supabase.from('profiles').upsert({
-            id: session.user.id,
-            email: session.user.email,
-            full_name: session.user.user_metadata.full_name,
-            updated_at: new Date().toISOString(),
-          });
-
-          if (error) {
-            console.error('Error updating profile:', error);
-          }
+        if (mounted) {
+          await handleAuthStateChange(event, session);
         }
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (mounted) {
+        console.log('[Auth] Existing session check:', session?.user?.email);
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await debouncedProfileUpdate(session);
+        } else {
+          setLoading(false);
+        }
+      }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      mounted = false;
+      console.log('[Auth] Cleaning up auth state listener');
+      subscription.unsubscribe();
+    };
+  }, [handleAuthStateChange, debouncedProfileUpdate]);
 
   const signIn = async (email: string, password: string) => {
+    if (!email || !password) {
+      toast.error('Email and password are required');
+      return;
+    }
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error) throw error;
       toast.success('Signed in successfully');
       navigate('/admin/dashboard');
-    } catch (error: any) {
-      toast.error(error.message || 'Error signing in');
-      console.error('Error signing in:', error);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message || 'Error signing in');
+        console.error('Error signing in:', error);
+      } else {
+        toast.error('Error signing in');
+        console.error('Error signing in:', error);
+      }
     }
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
+    if (!email || !password || !fullName) {
+      toast.error('All fields are required');
+      return;
+    }
     try {
       const { error } = await supabase.auth.signUp({
-        email, 
+        email: email.trim(),
         password,
         options: {
           data: {
-            full_name: fullName,
+            full_name: fullName.trim(),
           },
         },
       });
       if (error) throw error;
-      toast.success('Signed up successfully! You can now sign in.');
+      toast.success('Signed up successfully! Please check your email for confirmation.');
       navigate('/auth');
-    } catch (error: any) {
-      toast.error(error.message || 'Error signing up');
-      console.error('Error signing up:', error);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+        console.error('Error signing up:', error);
+      } else {
+        toast.error('An unexpected error occurred during sign up');
+        console.error('Error signing up:', error);
+      }
     }
   };
 
@@ -92,9 +190,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) throw error;
       navigate('/');
       toast.success('Signed out successfully');
-    } catch (error: any) {
-      toast.error(error.message || 'Error signing out');
-      console.error('Error signing out:', error);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message || 'Error signing out');
+        console.error('Error signing out:', error);
+      } else {
+        toast.error('Error signing out');
+        console.error('Error signing out:', error);
+      }
     }
   };
 

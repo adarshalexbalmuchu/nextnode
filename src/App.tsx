@@ -2,36 +2,63 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, Suspense, lazy } from "react";
 import Index from "./pages/Index";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import About from "./pages/About";
-import Dashboard from "./pages/admin/Dashboard";
-import NewPost from "./pages/admin/NewPost";
 import NotFound from "./pages/NotFound";
-import Auth from "./pages/Auth";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-const queryClient = new QueryClient();
+// Lazy load admin routes
+const Auth = lazy(() => import("./pages/Auth"));
+const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
+const NewPost = lazy(() => import("./pages/admin/NewPost"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error: any) => {
+        // Don't retry on 401/403 errors
+        if (error?.status === 401 || error?.status === 403) {
+          return false;
+        }
+        // Retry other errors up to 3 times
+        return failureCount < 3;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+      // Add error handling
+      onError: (error: any) => {
+        console.error('[Query Error]', error);
+        if (error?.status === 401 || error?.status === 403) {
+          // Redirect to auth page on unauthorized
+          window.location.href = '/auth';
+        }
+      },
+    },
+  },
+});
 
 // Initialize dark mode from localStorage or system preference
 const initializeDarkMode = () => {
-  // Check for saved theme preference
   const savedTheme = localStorage.getItem('theme');
-  
-  // If the user has explicitly chosen a theme, use it
   if (savedTheme) {
     document.documentElement.classList.toggle('dark', savedTheme === 'dark');
     return;
   }
-  
-  // Otherwise, use system preference
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   document.documentElement.classList.toggle('dark', prefersDark);
 };
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+  </div>
+);
 
 const App = () => {
   useEffect(() => {
@@ -45,21 +72,50 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/blog/:slug" element={<BlogPost />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/auth" element={<Auth />} />
-              
-              {/* Protected Admin Routes */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/admin/dashboard" element={<Dashboard />} />
-                <Route path="/admin/new-post" element={<NewPost />} />
-              </Route>
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:slug" element={<BlogPost />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/privacy-policy" element={<About />} />
+                <Route path="/terms" element={<About />} />
+                
+                {/* Auth Routes */}
+                <Route path="/auth" element={<Auth />} />
+                
+                {/* Protected Admin Routes */}
+                <Route 
+                  path="/admin"
+                  element={<ProtectedRoute />}
+                >
+                  <Route 
+                    index 
+                    element={<Navigate to="/admin/dashboard" replace />} 
+                  />
+                  <Route 
+                    path="dashboard" 
+                    element={
+                      <Suspense fallback={<LoadingFallback />}>
+                        <Dashboard />
+                      </Suspense>
+                    } 
+                  />
+                  <Route 
+                    path="new-post" 
+                    element={
+                      <Suspense fallback={<LoadingFallback />}>
+                        <NewPost />
+                      </Suspense>
+                    } 
+                  />
+                </Route>
+                
+                {/* 404 - Not Found */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

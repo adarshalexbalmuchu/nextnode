@@ -1,7 +1,65 @@
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
-
+import { Line } from "react-chartjs-2"
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ChartData,
+  ChartOptions
+} from "chart.js"
 import { cn } from "@/lib/utils"
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+)
+
+// Define chart types
+export interface LineChartProps {
+  data: ChartData<'line'>
+  options?: ChartOptions<'line'>
+}
+
+// Chart.js Line Chart component
+const ChartJSLine = React.memo(({ data, options }: LineChartProps) => {
+  return (
+    <div className="h-[200px] w-full">
+      <Line 
+        data={data}
+        options={{
+          ...options,
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'nearest',
+            axis: 'x',
+            intersect: false
+          },
+          plugins: {
+            ...options?.plugins,
+            legend: {
+              position: 'bottom' as const,
+              ...options?.plugins?.legend
+            }
+          }
+        }}
+      />
+    </div>
+  )
+})
+ChartJSLine.displayName = "ChartJSLine"
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const
@@ -32,7 +90,7 @@ function useChart() {
   return context
 }
 
-const ChartContainer = React.forwardRef<
+const ChartContainer = React.memo(React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     config: ChartConfig
@@ -56,13 +114,20 @@ const ChartContainer = React.forwardRef<
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
-        <RechartsPrimitive.ResponsiveContainer>
-          {children}
-        </RechartsPrimitive.ResponsiveContainer>
+        <React.Suspense fallback={
+          <div className="flex items-center justify-center w-full h-full">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </div>
+        }>
+          <RechartsPrimitive.ResponsiveContainer>
+            {children}
+          </RechartsPrimitive.ResponsiveContainer>
+        </React.Suspense>
       </div>
     </ChartContext.Provider>
   )
-})
+}))
+
 ChartContainer.displayName = "Chart"
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
@@ -98,9 +163,12 @@ ${colorConfig
   )
 }
 
-const ChartTooltip = RechartsPrimitive.Tooltip
+const ChartTooltip: typeof RechartsPrimitive.Tooltip = RechartsPrimitive.Tooltip
 
-const ChartTooltipContent = React.forwardRef<
+type ValueType = string | number | undefined
+type NameType = string | number | undefined
+
+const ChartTooltipContent = React.memo(React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
     React.ComponentProps<"div"> & {
@@ -251,12 +319,12 @@ const ChartTooltipContent = React.forwardRef<
       </div>
     )
   }
-)
-ChartTooltipContent.displayName = "ChartTooltip"
+))
+ChartTooltipContent.displayName = "ChartTooltipContent"
 
 const ChartLegend = RechartsPrimitive.Legend
 
-const ChartLegendContent = React.forwardRef<
+const ChartLegendContent = React.memo(React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> &
     Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
@@ -311,8 +379,9 @@ const ChartLegendContent = React.forwardRef<
       </div>
     )
   }
-)
-ChartLegendContent.displayName = "ChartLegend"
+))
+
+ChartLegendContent.displayName = "ChartLegendContent"
 
 // Helper to extract item config from a payload.
 function getPayloadConfigFromPayload(
@@ -360,4 +429,5 @@ export {
   ChartLegend,
   ChartLegendContent,
   ChartStyle,
+  ChartJSLine as LineChart,
 }

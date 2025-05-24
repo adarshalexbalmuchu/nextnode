@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Menu, X } from 'lucide-react';
@@ -35,11 +34,9 @@ const Header = () => {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <Link to="/">
-              <img 
-                src="/lovable-uploads/28434454-94ec-467d-9440-689c1e5c6005.png" 
-                alt="NextNode Logo" 
-                className="h-10 w-auto"
-              />
+              <div className="h-10 w-auto font-bold text-xl">
+                NextNode
+              </div>
             </Link>
           </div>
 
@@ -48,11 +45,12 @@ const Header = () => {
             <NavigationMenu>
               <NavigationMenuList>
                 <NavigationMenuItem>
-                  <Link to="/">
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                      Home
-                    </NavigationMenuLink>
-                  </Link>
+                  <NavigationMenuLink 
+                    className={navigationMenuTriggerStyle()} 
+                    asChild
+                  >
+                    <Link to="/">Home</Link>
+                  </NavigationMenuLink>
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
@@ -81,19 +79,21 @@ const Header = () => {
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
-                  <Link to="/blog">
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                      Blog
-                    </NavigationMenuLink>
-                  </Link>
+                  <NavigationMenuLink 
+                    className={navigationMenuTriggerStyle()} 
+                    asChild
+                  >
+                    <Link to="/blog">Blog</Link>
+                  </NavigationMenuLink>
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
-                  <Link to="/about">
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                      About
-                    </NavigationMenuLink>
-                  </Link>
+                  <NavigationMenuLink 
+                    className={navigationMenuTriggerStyle()} 
+                    asChild
+                  >
+                    <Link to="/about">About</Link>
+                  </NavigationMenuLink>
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
