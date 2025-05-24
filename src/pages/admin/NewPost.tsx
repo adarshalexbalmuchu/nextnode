@@ -5,7 +5,7 @@ import { ImageIcon, Plus, Save, EyeIcon, Calendar, Loader2 } from 'lucide-react'
 import AdminLayout from '@/components/admin/AdminLayout';
 import { toast } from 'sonner';
 import { BlogService } from '@/services/BlogService';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 import { useNavigate } from 'react-router-dom';
 
 const NewPost = () => {

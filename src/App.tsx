@@ -15,6 +15,7 @@ import UserDashboard from './pages/UserDashboard';
 import UserProtectedRoute from './components/UserProtectedRoute';
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsAndConditions from "./pages/TermsAndConditions";
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Lazy load admin routes
 const Auth = lazy(() => import("./pages/Auth"));
@@ -69,62 +70,64 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <Suspense fallback={<LoadingFallback />}>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<Index />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:slug" element={<BlogPost />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
-                
-                {/* Auth Routes */}
-                <Route path="/auth" element={<Auth />} />
-                
-                {/* Protected Admin Routes */}
-                <Route 
-                  path="/admin"
-                  element={<ProtectedRoute />}
-                >
+        <ErrorBoundary>
+          <BrowserRouter>
+            <AuthProvider>
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/:slug" element={<BlogPost />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+                  
+                  {/* Auth Routes */}
+                  <Route path="/auth" element={<Auth />} />
+                  
+                  {/* Protected Admin Routes */}
                   <Route 
-                    index 
-                    element={<Navigate to="/admin/dashboard" replace />} 
-                  />
-                  <Route 
-                    path="dashboard" 
-                    element={
-                      <Suspense fallback={<LoadingFallback />}>
-                        <Dashboard />
-                      </Suspense>
-                    } 
-                  />
-                  <Route 
-                    path="new-post" 
-                    element={
-                      <Suspense fallback={<LoadingFallback />}>
-                        <NewPost />
-                      </Suspense>
-                    } 
-                  />
-                </Route>
+                    path="/admin"
+                    element={<ProtectedRoute />}
+                  >
+                    <Route 
+                      index 
+                      element={<Navigate to="/admin/dashboard" replace />} 
+                    />
+                    <Route 
+                      path="dashboard" 
+                      element={
+                        <Suspense fallback={<LoadingFallback />}>
+                          <Dashboard />
+                        </Suspense>
+                      } 
+                    />
+                    <Route 
+                      path="new-post" 
+                      element={
+                        <Suspense fallback={<LoadingFallback />}>
+                          <NewPost />
+                        </Suspense>
+                      } 
+                    />
+                  </Route>
 
-                {/* Protected User Dashboard Route */}
-                <Route 
-                  path="/user"
-                  element={<UserProtectedRoute />} 
-                >
-                  <Route index element={<UserDashboard />} />
-                </Route>
-                
-                {/* 404 - Not Found */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </AuthProvider>
-        </BrowserRouter>
+                  {/* Protected User Dashboard Route */}
+                  <Route 
+                    path="/user"
+                    element={<UserProtectedRoute />} 
+                  >
+                    <Route index element={<UserDashboard />} />
+                  </Route>
+                  
+                  {/* 404 - Not Found */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </AuthProvider>
+          </BrowserRouter>
+        </ErrorBoundary>
       </TooltipProvider>
     </QueryClientProvider>
   );

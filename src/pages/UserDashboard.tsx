@@ -1,7 +1,9 @@
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/types/supabase';
+import { toast } from '@/components/ui/sonner';
 
 interface Bookmark {
   id: string;
@@ -42,7 +44,7 @@ const UserDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Fetch user data using REST API for custom tables
+  // Fetch user data using Supabase JS client with types
   useEffect(() => {
     if (!user) return;
     setLoading(true);
@@ -50,12 +52,13 @@ const UserDashboard = () => {
     const fetchData = async () => {
       try {
         // Bookmarks
-        const bmRes = await fetch(`/rest/v1/bookmarks?user_id=eq.${user.id}&select=id,post_id,posts(title,slug)`, {
-          headers: { 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY }
-        });
-        const bm: Array<{ id: string; post_id: string; posts: { title: string; slug: string } }> = await bmRes.json();
+        const { data: bm, error: bmError } = await supabase
+          .from('bookmarks')
+          .select('id, post_id, posts(title, slug)')
+          .eq('user_id', user.id);
+        if (bmError) throw bmError;
         setBookmarks(
-          bm.map((b) => ({
+          (bm || []).map((b: { id: string; post_id: string; posts?: { title?: string; slug?: string } }) => ({
             id: b.id,
             post_id: b.post_id,
             post_title: b.posts?.title || '',
@@ -63,29 +66,34 @@ const UserDashboard = () => {
           }))
         );
         // History
-        const histRes = await fetch(`/rest/v1/reading_history?user_id=eq.${user.id}&select=id,post_id,posts(title,slug),viewed_at&order=viewed_at.desc&limit=10`, {
-          headers: { 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY }
-        });
-        const hist: Array<{ id: string; post_id: string; posts: { title: string; slug: string }; viewed_at: string }> = await histRes.json();
+        const { data: hist, error: histError } = await supabase
+          .from('reading_history')
+          .select('id, post_id, viewed_at')
+          .eq('user_id', user.id)
+          .order('viewed_at', { ascending: false })
+          .limit(10);
+        if (histError) throw histError;
         setHistory(
-          hist.map((h) => ({
+          (hist || []).map((h: Database['public']['Tables']['reading_history']['Row']) => ({
             id: h.id,
             post_id: h.post_id,
-            post_title: h.posts?.title || '',
-            post_slug: h.posts?.slug || '',
+            post_title: '', // Optionally fetch post title in a separate query if needed
+            post_slug: '',
             viewed_at: h.viewed_at,
           }))
         );
         // Comments
-        const commRes = await fetch(`/rest/v1/comments?user_id=eq.${user.id}&select=id,post_id,posts(title),content,created_at&order=created_at.desc`, {
-          headers: { 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY }
-        });
-        const comm: Array<{ id: string; post_id: string; posts: { title: string }; content: string; created_at: string }> = await commRes.json();
+        const { data: comm, error: commError } = await supabase
+          .from('comments')
+          .select('id, post_id, content, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        if (commError) throw commError;
         setComments(
-          comm.map((c) => ({
+          (comm || []).map((c: Database['public']['Tables']['comments']['Row']) => ({
             id: c.id,
             post_id: c.post_id,
-            post_title: c.posts?.title || '',
+            post_title: '', // Optionally fetch post title in a separate query if needed
             content: c.content,
             created_at: c.created_at,
           }))
@@ -116,21 +124,39 @@ const UserDashboard = () => {
       const { error: updateError } = await supabase.auth.updateUser(updates);
       if (updateError) throw updateError;
       setSaving(false);
-      alert('Profile updated!');
+      toast.success('Profile updated!');
     } catch (e) {
       setError('Failed to update profile.');
+      toast.error('Failed to update profile.');
       setSaving(false);
     }
   };
 
   // Delete comment
   const handleDeleteComment = async (id: string) => {
-    if (!window.confirm('Delete this comment?')) return;
-    await fetch(`/rest/v1/comments?id=eq.${id}`, {
-      method: 'DELETE',
-      headers: { 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY }
+    let confirmed = false;
+    await new Promise<void>(resolve => {
+      toast(
+        <span>
+          Delete this comment?
+          <button onClick={() => { confirmed = true; toast.dismiss(); resolve(); }} className="ml-2 text-red-600 underline">Yes</button>
+          <button onClick={() => { confirmed = false; toast.dismiss(); resolve(); }} className="ml-2 underline">No</button>
+        </span>,
+        { duration: 5000, unstyled: true }
+      );
     });
+    if (!confirmed) return;
+    const { error } = await supabase
+      .from('comments')
+      .delete()
+      .eq('id', id);
+    if (error) {
+      setError('Failed to delete comment.');
+      toast.error('Failed to delete comment.');
+      return;
+    }
     setComments((prev) => prev.filter((c) => c.id !== id));
+    toast.success('Comment deleted.');
   };
 
   const handleLogout = async () => {

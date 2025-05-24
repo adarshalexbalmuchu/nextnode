@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,10 +14,14 @@ interface AuthContextProps {
   loading: boolean;
 }
 
+interface UserWithRole extends User {
+  role?: string | null;
+}
+
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserWithRole | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -37,9 +40,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      // Use raw SQL approach to avoid type conflicts
+      // Use the correct table and types for upsert
       const { error } = await supabase
-        .from('users' as any)
+        .from('profiles')
         .upsert({
           id: session.user.id,
           email: session.user.email,
@@ -70,13 +73,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Memoize auth state handler
   const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
     console.log('[Auth] Auth state changed:', event, session?.user?.email);
-    
     setSession(session);
-    setUser(session?.user ?? null);
-
-    if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+    if (session?.user) {
+      // Fetch user role from profiles table
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+      const userWithRole: UserWithRole = {
+        ...session.user,
+        role: profile?.role || null,
+      };
+      setUser(userWithRole);
       await debouncedProfileUpdate(session);
     } else {
+      setUser(null);
       setLoading(false);
     }
   }, [debouncedProfileUpdate]);
@@ -191,10 +203,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export type { AuthContextProps };
+export { AuthContext };
+
+// Remove useAuth from this file to comply with fast refresh rules

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import {
   Bell, FileText, Home, LayoutDashboard, LogOut, 
   Menu, Moon, Plus, Settings, Sun, User, X 
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 
 interface AdminLayoutProps {
   children: React.ReactNode;

@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import BlogCard from '@/components/BlogCard';
 import { BlogService } from '@/services/BlogService';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 
 const BlogPost = () => {
   const { slug } = useParams();

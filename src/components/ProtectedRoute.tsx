@@ -1,7 +1,8 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 import { Skeleton } from './ui/skeleton';
+import { isAdmin } from '@/utils/isAdmin';
 
 interface ProtectedRouteProps {
   children?: React.ReactNode;
@@ -34,8 +35,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Only allow admin access to a specific email
-  if (user.email !== 'adarshbalmuchu@gmail.com') {
+  // Only allow admin access using Supabase role
+  if (!isAdmin(user)) {
     console.log('[ProtectedRoute] User is not admin, redirecting to home...');
     return <Navigate to="/" replace />;
   }

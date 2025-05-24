@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Menu, X } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
+import { isAdmin } from '@/utils/isAdmin';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -109,7 +110,7 @@ const Header = () => {
             
             <ThemeToggle />
             
-            {user && user.email === 'adarshbalmuchu@gmail.com' && (
+            {user && isAdmin(user) && (
               <Link
                 to="/admin/dashboard"
                 className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors"
@@ -117,7 +118,7 @@ const Header = () => {
                 Admin
               </Link>
             )}
-            {user && user.email !== 'adarshbalmuchu@gmail.com' && (
+            {user && !isAdmin(user) && (
               <Link
                 to="/user"
                 className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
