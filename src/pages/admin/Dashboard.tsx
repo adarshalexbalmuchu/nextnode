@@ -1,5 +1,5 @@
 
-import React, { Suspense, lazy, useMemo, useEffect } from 'react';
+import React, { Suspense, lazy, useMemo } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -7,10 +7,7 @@ import { Bell, Activity, FileText } from 'lucide-react';
 import { LineChart } from '@/components/ui/chart';
 import { useQuery } from '@tanstack/react-query';
 import { BlogService } from '@/services/BlogService';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface Post {
   author: string;
@@ -74,16 +71,6 @@ StatCard.displayName = 'StatCard';
 
 const Dashboard = () => {
   console.log('[Dashboard] Component mounted');
-  const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
-
-  useEffect(() => {
-    console.log('[Dashboard] User state:', { 
-      isAuthenticated: !!user,
-      email: user?.email,
-      authLoading 
-    });
-  }, [user, authLoading]);
 
   // Define chart data and options up front to avoid conditional hook calls
   const chartData = useMemo(() => ({
@@ -118,17 +105,11 @@ const Dashboard = () => {
         return posts;
       } catch (error) {
         console.error('[Dashboard] Error fetching posts:', error);
-        // Check if unauthorized and redirect to auth
-        if (error instanceof Error && 
-           (error.message.includes('Authentication required') || 
-            error.message.includes('Insufficient permissions'))) {
-          toast.error('Please sign in again');
-          navigate('/auth');
-        }
         throw error;
       }
     },
-    retry: false, // Don't retry on auth errors
+    retry: 1, // Reduce retry attempts
+    staleTime: 30000, // Cache for 30 seconds
   });
 
   console.log('[Dashboard] Render state:', { postsLoading, postsError, postsCount: posts?.length });

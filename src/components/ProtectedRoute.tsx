@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
-import { Navigate, Outlet, useNavigate } from 'react-router-dom';
+
+import React from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from './ui/skeleton';
-import { toast } from 'sonner';
 
 interface ProtectedRouteProps {
   children?: React.ReactNode;
@@ -10,16 +10,6 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    console.log('[ProtectedRoute] Mount with state:', { loading, user: !!user });
-    if (!loading && !user) {
-      console.log('[ProtectedRoute] No user found, redirecting to auth...');
-      toast.error('Please sign in to access this page');
-      navigate('/auth');
-    }
-  }, [user, loading, navigate]);
 
   console.log('[ProtectedRoute] Status:', { 
     loading, 
@@ -38,6 +28,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         </div>
       </div>
     );
+  }
+
+  if (!user) {
+    console.log('[ProtectedRoute] No user found, redirecting to auth...');
+    return <Navigate to="/auth" replace />;
   }
 
   return children || <Outlet />;

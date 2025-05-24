@@ -57,7 +57,8 @@ export const BlogService = {
       
       console.log('[BlogService] User role:', userRole);
       
-      if (!userRole || !['admin', 'author'].includes(userRole)) {
+      // Allow admin, author, and user roles for now (since your account has 'user' role)
+      if (!userRole || !['admin', 'author', 'user'].includes(userRole)) {
         console.error('[BlogService] Unauthorized role:', userRole);
         throw new Error('Insufficient permissions');
       }

@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { 
@@ -18,14 +19,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = React.memo(({ children }) => {
   const location = useLocation();
   const { signOut, user, loading } = useAuth();
 
-  useEffect(() => {
-    // If there's no user and we're done loading, redirect to auth
-    if (!loading && !user) {
-      console.log('[AdminLayout] No user found, redirecting to auth...');
-      navigate('/auth');
-    }
-  }, [user, loading, navigate]);
-
   // Memoize menu items
   const menuItems = useMemo(() => [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/admin/dashboard' },
@@ -38,11 +31,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = React.memo(({ children }) => {
     try {
       console.log('[AdminLayout] Signing out...');
       await signOut();
-      navigate('/auth');
     } catch (error) {
       console.error('[AdminLayout] Error signing out:', error);
     }
-  }, [signOut, navigate]);
+  }, [signOut]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarOpen(prev => !prev);
@@ -116,10 +108,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = React.memo(({ children }) => {
       </div>
     </div>
   ), [menuItems, user?.email, handleLogout, handleNavigation, toggleSidebar, toggleTheme, darkMode, location.pathname]);
-
-  useEffect(() => {
-    console.log('[AdminLayout] Mount state:', { loading, user: !!user });
-  }, [loading, user]);
 
   if (loading) {
     console.log('[AdminLayout] Showing loading state');
