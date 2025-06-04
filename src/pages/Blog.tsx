@@ -10,13 +10,13 @@ import { mockPosts, categories } from '@/data/mockPosts';
 
 const Blog = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('newest');
 
   const filteredPosts = mockPosts.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          post.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || post.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || post.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -71,7 +71,7 @@ const Blog = () => {
                     <SelectValue placeholder="All Categories" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Categories</SelectItem>
+                    <SelectItem value="all">All Categories</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category} value={category}>
                         {category}
@@ -128,7 +128,7 @@ const Blog = () => {
                 </p>
                 <Button onClick={() => {
                   setSearchQuery('');
-                  setSelectedCategory('');
+                  setSelectedCategory('all');
                 }}>
                   Clear Filters
                 </Button>
