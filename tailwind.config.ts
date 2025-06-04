@@ -26,18 +26,18 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: '#00BFA6',
-					50: '#E0FFF9',
-					100: '#B3FFF0',
-					200: '#80FFE6',
-					300: '#4DFFDC',
-					400: '#1AFFD2',
-					500: '#00BFA6',
-					600: '#00A085',
-					700: '#008066',
-					800: '#006047',
-					900: '#004028',
-					foreground: '#FFFFFF'
+					DEFAULT: '#00FFE0',
+					50: '#E6FFFC',
+					100: '#CCFFF8',
+					200: '#99FFF1',
+					300: '#66FFEA',
+					400: '#33FFE3',
+					500: '#00FFE0',
+					600: '#00CCB3',
+					700: '#009986',
+					800: '#006659',
+					900: '#00332D',
+					foreground: '#0A192F'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -70,6 +70,12 @@ export default {
 					800: '#040A12',
 					900: '#020509'
 				},
+				neon: {
+					cyan: '#00FFE0',
+					purple: '#9B5DE5',
+					pink: '#FF006E',
+					blue: '#3B82F6'
+				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
 					foreground: 'hsl(var(--destructive-foreground))'
@@ -85,21 +91,12 @@ export default {
 				card: {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
-				},
-				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
 			fontFamily: {
-				sans: ['Inter', 'system-ui', 'sans-serif'],
+				sans: ['Sora', 'Inter', 'system-ui', 'sans-serif'],
 				mono: ['JetBrains Mono', 'Consolas', 'monospace'],
+				display: ['Sora', 'Inter', 'system-ui', 'sans-serif']
 			},
 			fontSize: {
 				'xs': ['0.75rem', { lineHeight: '1rem' }],
@@ -124,18 +121,41 @@ export default {
 			backgroundImage: {
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
 				'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-				'gradient-primary': 'linear-gradient(135deg, #00BFA6 0%, #9B5DE5 100%)',
+				'gradient-primary': 'linear-gradient(135deg, #00FFE0 0%, #9B5DE5 100%)',
 				'gradient-dark': 'linear-gradient(135deg, #0A192F 0%, #1A365D 100%)',
+				'gradient-glow': 'radial-gradient(circle at center, rgba(0, 255, 224, 0.3) 0%, transparent 70%)',
+				'mesh-gradient': 'linear-gradient(45deg, #00FFE0 0%, #9B5DE5 25%, #FF006E 50%, #3B82F6 75%, #00FFE0 100%)'
+			},
+			boxShadow: {
+				'glow': '0 0 20px rgba(0, 255, 224, 0.3)',
+				'glow-lg': '0 0 40px rgba(0, 255, 224, 0.4)',
+				'glow-purple': '0 0 20px rgba(155, 93, 229, 0.3)',
+				'glass': '0 8px 32px rgba(31, 38, 135, 0.37)',
+				'neomorph': '20px 20px 60px #bebebe, -20px -20px 60px #ffffff',
+				'neomorph-dark': '20px 20px 60px #0d1421, -20px -20px 60px #162238'
+			},
+			backdropBlur: {
+				'xs': '2px',
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'fade-in': 'fade-in 0.5s ease-out',
-				'fade-up': 'fade-up 0.5s ease-out',
-				'scale-in': 'scale-in 0.3s ease-out',
-				'slide-up': 'slide-up 0.4s ease-out',
+				'fade-in': 'fade-in 0.6s ease-out',
+				'fade-up': 'fade-up 0.6s ease-out',
+				'scale-in': 'scale-in 0.4s ease-out',
+				'slide-up': 'slide-up 0.5s ease-out',
+				'slide-down': 'slide-down 0.5s ease-out',
+				'slide-left': 'slide-left 0.5s ease-out',
+				'slide-right': 'slide-right 0.5s ease-out',
 				'glow': 'glow 2s ease-in-out infinite alternate',
-				'float': 'float 3s ease-in-out infinite',
+				'glow-pulse': 'glow-pulse 3s ease-in-out infinite',
+				'float': 'float 4s ease-in-out infinite',
+				'bounce-slow': 'bounce 2s infinite',
+				'spin-slow': 'spin 3s linear infinite',
+				'pulse-slow': 'pulse 3s ease-in-out infinite',
+				'gradient': 'gradient 8s ease infinite',
+				'shimmer': 'shimmer 2s linear infinite',
+				'typewriter': 'typewriter 3s steps(40) infinite'
 			},
 			keyframes: {
 				'accordion-down': {
@@ -151,7 +171,7 @@ export default {
 					'100%': { opacity: '1' }
 				},
 				'fade-up': {
-					'0%': { opacity: '0', transform: 'translateY(20px)' },
+					'0%': { opacity: '0', transform: 'translateY(30px)' },
 					'100%': { opacity: '1', transform: 'translateY(0)' }
 				},
 				'scale-in': {
@@ -159,17 +179,51 @@ export default {
 					'100%': { opacity: '1', transform: 'scale(1)' }
 				},
 				'slide-up': {
-					'0%': { transform: 'translateY(100%)' },
-					'100%': { transform: 'translateY(0)' }
+					'0%': { opacity: '0', transform: 'translateY(100%)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' }
+				},
+				'slide-down': {
+					'0%': { opacity: '0', transform: 'translateY(-100%)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' }
+				},
+				'slide-left': {
+					'0%': { opacity: '0', transform: 'translateX(100%)' },
+					'100%': { opacity: '1', transform: 'translateX(0)' }
+				},
+				'slide-right': {
+					'0%': { opacity: '0', transform: 'translateX(-100%)' },
+					'100%': { opacity: '1', transform: 'translateX(0)' }
 				},
 				'glow': {
-					'0%': { boxShadow: '0 0 20px rgba(0, 191, 166, 0.3)' },
-					'100%': { boxShadow: '0 0 30px rgba(0, 191, 166, 0.6)' }
+					'0%': { boxShadow: '0 0 20px rgba(0, 255, 224, 0.3)' },
+					'100%': { boxShadow: '0 0 40px rgba(0, 255, 224, 0.6)' }
+				},
+				'glow-pulse': {
+					'0%, 100%': { boxShadow: '0 0 20px rgba(0, 255, 224, 0.3)' },
+					'50%': { boxShadow: '0 0 60px rgba(0, 255, 224, 0.8)' }
 				},
 				'float': {
 					'0%, 100%': { transform: 'translateY(0px)' },
-					'50%': { transform: 'translateY(-10px)' }
+					'50%': { transform: 'translateY(-20px)' }
+				},
+				'gradient': {
+					'0%, 100%': { backgroundPosition: '0% 50%' },
+					'50%': { backgroundPosition: '100% 50%' }
+				},
+				'shimmer': {
+					'0%': { transform: 'translateX(-100%)' },
+					'100%': { transform: 'translateX(100%)' }
+				},
+				'typewriter': {
+					'0%': { width: '0%' },
+					'50%': { width: '100%' },
+					'100%': { width: '0%' }
 				}
+			},
+			spacing: {
+				'18': '4.5rem',
+				'88': '22rem',
+				'128': '32rem'
 			}
 		}
 	},

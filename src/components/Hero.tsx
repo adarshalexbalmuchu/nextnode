@@ -2,11 +2,11 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Zap, Brain, Cpu, Rocket } from 'lucide-react';
 
 const Hero = () => {
   const [currentWord, setCurrentWord] = useState(0);
-  const words = ['Intelligence', 'Innovation', 'Future', 'Technology'];
+  const words = ['Intelligence', 'Innovation', 'Future', 'Technology', 'Discovery'];
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -18,66 +18,87 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background Grid */}
-      <div className="absolute inset-0 tech-grid opacity-30" />
+      {/* Animated Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-navy via-navy-600 to-navy-800" />
+      <div className="absolute inset-0 tech-grid opacity-20" />
       
-      {/* Gradient Overlays */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10" />
-      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/20 rounded-full blur-3xl animate-float" />
-      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-accent/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }} />
+      {/* Floating Elements */}
+      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-glow rounded-full blur-3xl animate-float opacity-30" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-r from-accent/30 to-primary/30 rounded-full blur-3xl animate-float opacity-20" style={{ animationDelay: '2s' }} />
+      <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-gradient-to-r from-neon-purple/20 to-neon-cyan/20 rounded-full blur-3xl animate-pulse opacity-10" />
 
-      <div className="container mx-auto px-4 text-center relative z-10">
-        <div className="max-w-4xl mx-auto animate-fade-up">
+      {/* Tech Icons */}
+      <div className="absolute top-20 left-20 animate-float opacity-20">
+        <Brain className="w-12 h-12 text-primary" />
+      </div>
+      <div className="absolute top-32 right-32 animate-float opacity-20" style={{ animationDelay: '1s' }}>
+        <Cpu className="w-10 h-10 text-accent" />
+      </div>
+      <div className="absolute bottom-32 left-32 animate-float opacity-20" style={{ animationDelay: '2s' }}>
+        <Rocket className="w-14 h-14 text-neon-purple" />
+      </div>
+
+      <div className="container mx-auto container-padding text-center relative z-10">
+        <div className="max-w-5xl mx-auto animate-fade-up">
           {/* Main Headline */}
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-            Next-Gen AI{' '}
-            <span className="relative inline-block">
-              <span className="gradient-text">
-                {words[currentWord]}
+          <div className="mb-8">
+            <h1 className="text-6xl md:text-7xl lg:text-8xl font-display font-bold mb-6 leading-tight">
+              The Future of{' '}
+              <span className="relative inline-block">
+                <span className="gradient-text animate-pulse">
+                  {words[currentWord]}
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-accent/20 to-neon-purple/20 blur-2xl -z-10 animate-glow-pulse" />
               </span>
-              <span className="absolute -inset-2 bg-gradient-primary opacity-20 blur-lg rounded-lg animate-pulse" />
-            </span>
-          </h1>
+            </h1>
+            <h2 className="text-6xl md:text-7xl lg:text-8xl font-display font-bold text-white">
+              is Written Here
+            </h2>
+          </div>
 
           {/* Subtitle */}
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-            Exploring the frontier of artificial intelligence, emerging technologies, 
-            and the innovations shaping our digital future.
+          <p className="text-xl md:text-2xl text-white/80 mb-12 max-w-3xl mx-auto leading-relaxed">
+            Dive deep into the cutting-edge world of artificial intelligence, 
+            emerging technologies, and the innovations reshaping our tomorrow.
           </p>
 
-          {/* Newsletter Signup */}
-          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto mb-12">
+          {/* CTA Section */}
+          <div className="flex flex-col sm:flex-row gap-6 max-w-lg mx-auto mb-16">
             <Input
               type="email"
-              placeholder="Enter your email"
-              className="flex-1 h-12 text-lg bg-background/50 backdrop-blur-sm border-2 border-primary/20 focus:border-primary/50"
+              placeholder="Enter your email for AI insights"
+              className="flex-1 h-14 text-lg bg-white/10 backdrop-blur-sm border-2 border-primary/30 focus:border-primary placeholder:text-white/60 text-white"
             />
-            <Button className="h-12 px-8 bg-gradient-primary text-white hover:opacity-90 group">
+            <Button className="h-14 px-8 btn-primary group text-lg font-semibold">
               Get Insights
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-8 max-w-2xl mx-auto">
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold gradient-text mb-2">50K+</div>
-              <div className="text-sm text-muted-foreground">Weekly Readers</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
+            <div className="text-center group">
+              <div className="text-4xl md:text-5xl font-bold gradient-text mb-2 group-hover:scale-110 transition-transform">50K+</div>
+              <div className="text-sm text-white/60 uppercase tracking-wider">Tech Leaders</div>
             </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold gradient-text mb-2">200+</div>
-              <div className="text-sm text-muted-foreground">Deep Insights</div>
+            <div className="text-center group">
+              <div className="text-4xl md:text-5xl font-bold gradient-text mb-2 group-hover:scale-110 transition-transform">200+</div>
+              <div className="text-sm text-white/60 uppercase tracking-wider">Deep Insights</div>
             </div>
-            <div className="text-center col-span-2 md:col-span-1">
-              <div className="text-3xl md:text-4xl font-bold gradient-text mb-2">24/7</div>
-              <div className="text-sm text-muted-foreground">Future Coverage</div>
+            <div className="text-center group">
+              <div className="text-4xl md:text-5xl font-bold gradient-text mb-2 group-hover:scale-110 transition-transform">24/7</div>
+              <div className="text-sm text-white/60 uppercase tracking-wider">Future Coverage</div>
+            </div>
+            <div className="text-center group">
+              <div className="text-4xl md:text-5xl font-bold gradient-text mb-2 group-hover:scale-110 transition-transform">AI</div>
+              <div className="text-sm text-white/60 uppercase tracking-wider">Powered</div>
             </div>
           </div>
         </div>
 
         {/* Scroll Indicator */}
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <div className="w-6 h-10 border-2 border-primary/30 rounded-full flex justify-center">
+          <div className="w-6 h-10 border-2 border-primary/50 rounded-full flex justify-center">
             <div className="w-1 h-3 bg-primary rounded-full mt-2 animate-pulse" />
           </div>
         </div>
