@@ -4,12 +4,13 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Search, Menu, Moon, Sun, Zap } from 'lucide-react';
+import { Search, Menu, Moon, Sun, Zap, X } from 'lucide-react';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -55,37 +56,38 @@ const Header = () => {
 
   return (
     <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled 
-          ? 'glass-effect border-b border-primary/20 shadow-glow' 
+          ? 'bg-white/80 dark:bg-navy/80 backdrop-blur-lg border-b border-gray-200 dark:border-primary/20 shadow-sm' 
           : 'bg-transparent'
       }`}
     >
-      <div className="container mx-auto container-padding">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+          
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3 group">
+          <Link to="/" className="flex items-center space-x-3 group flex-shrink-0">
             <div className="relative">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-glow">
-                <Zap className="w-5 h-5 text-navy" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg">
+                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-navy dark:text-white" />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-xl blur-lg opacity-30 group-hover:opacity-50 transition-opacity"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-xl blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
             </div>
-            <span className="text-2xl font-display font-bold gradient-text group-hover:scale-105 transition-transform">
+            <span className="text-xl sm:text-2xl font-display font-bold text-gray-900 dark:text-white group-hover:scale-105 transition-transform duration-300">
               NextNode
             </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden lg:flex items-center space-x-8">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
                 className={`text-sm font-medium transition-all duration-300 relative group ${
                   isActive(item.href)
-                    ? 'text-primary'
-                    : 'text-foreground/70 hover:text-primary'
+                    ? 'text-primary dark:text-primary'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary'
                 }`}
               >
                 {item.name}
@@ -101,13 +103,13 @@ const Header = () => {
           {/* Search & Actions */}
           <div className="hidden md:flex items-center space-x-4">
             <div className="relative group">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 group-hover:text-primary transition-colors" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4 group-hover:text-primary transition-colors duration-300" />
               <Input
                 type="search"
-                placeholder="Search the future..."
+                placeholder="Search articles..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-64 bg-muted/30 border-muted hover:border-primary/50 focus:border-primary transition-all duration-300"
+                className="pl-10 w-48 lg:w-64 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-primary/50 focus:border-primary transition-all duration-300 text-gray-900 dark:text-gray-100"
               />
             </div>
             
@@ -115,54 +117,70 @@ const Header = () => {
               variant="ghost"
               size="sm"
               onClick={toggleDarkMode}
-              className="w-9 h-9 p-0 hover:bg-primary/10 hover:text-primary transition-all duration-300"
+              className="w-9 h-9 p-0 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-primary transition-all duration-300"
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
 
-            <Button className="btn-primary group">
+            <Button className="bg-gradient-to-r from-primary to-accent text-white hover:shadow-lg transition-all duration-300 group">
               <span>Subscribe</span>
-              <Zap className="w-4 h-4 ml-2 group-hover:rotate-12 transition-transform" />
+              <Zap className="w-4 h-4 ml-2 group-hover:rotate-12 transition-transform duration-300" />
             </Button>
           </div>
 
-          {/* Mobile Menu */}
-          <div className="md:hidden">
-            <Sheet>
+          {/* Mobile Menu Button */}
+          <div className="flex items-center space-x-2 lg:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleDarkMode}
+              className="w-9 h-9 p-0 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
+            
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-9 h-9 p-0">
+                <Button variant="ghost" size="sm" className="w-9 h-9 p-0 text-gray-700 dark:text-gray-300">
                   <Menu className="w-5 h-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-80 glass-dark border-primary/20">
+              <SheetContent side="right" className="w-80 bg-white dark:bg-navy border-gray-200 dark:border-primary/20">
                 <div className="flex flex-col space-y-6 mt-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
-                      <Zap className="w-4 h-4 text-navy" />
+                  
+                  {/* Mobile Logo */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
+                        <Zap className="w-4 h-4 text-navy dark:text-white" />
+                      </div>
+                      <span className="text-xl font-display font-bold text-gray-900 dark:text-white">NextNode</span>
                     </div>
-                    <span className="text-xl font-display font-bold gradient-text">NextNode</span>
                   </div>
 
+                  {/* Mobile Search */}
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
                       type="search"
-                      placeholder="Search the future..."
+                      placeholder="Search articles..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 bg-muted/30"
+                      className="pl-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100"
                     />
                   </div>
 
+                  {/* Mobile Navigation */}
                   <nav className="flex flex-col space-y-4">
                     {navigation.map((item) => (
                       <Link
                         key={item.name}
                         to={item.href}
-                        className={`text-lg font-medium transition-colors ${
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`text-lg font-medium transition-colors duration-300 ${
                           isActive(item.href)
                             ? 'text-primary'
-                            : 'text-foreground/70 hover:text-primary'
+                            : 'text-gray-700 dark:text-gray-300 hover:text-primary'
                         }`}
                       >
                         {item.name}
@@ -170,18 +188,10 @@ const Header = () => {
                     ))}
                   </nav>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-border">
-                    <Button
-                      variant="ghost"
-                      onClick={toggleDarkMode}
-                      className="flex items-center space-x-2"
-                    >
-                      {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                      <span>{isDark ? 'Light' : 'Dark'} Mode</span>
-                    </Button>
-                    
-                    <Button className="btn-primary">
-                      Subscribe
+                  {/* Mobile CTA */}
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <Button className="w-full bg-gradient-to-r from-primary to-accent text-white">
+                      Subscribe to Newsletter
                     </Button>
                   </div>
                 </div>
