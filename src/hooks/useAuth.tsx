@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setTimeout(async () => {
             try {
               const { data, error } = await supabase.rpc('get_user_role', { 
-                _user_id: session.user.id 
+                user_id: session.user.id 
               });
               if (!error) {
                 setUserRole(data);

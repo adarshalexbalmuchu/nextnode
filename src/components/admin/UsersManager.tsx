@@ -35,7 +35,7 @@ const UsersManager = () => {
         (profiles || []).map(async (profile) => {
           try {
             const { data: role } = await supabase.rpc('get_user_role', { 
-              _user_id: profile.id 
+              user_id: profile.id 
             });
             return { ...profile, role: role || 'user' };
           } catch (error) {
@@ -51,11 +51,12 @@ const UsersManager = () => {
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
-      // Call custom function to update user role
-      const { error } = await supabase.rpc('update_user_role', {
-        _user_id: userId,
-        _role: newRole
-      });
+      // Since update_user_role doesn't exist, we'll update the profiles table directly
+      // This assumes the role is stored in the profiles table
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', userId);
       
       if (error) throw error;
     },
