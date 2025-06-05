@@ -15,13 +15,15 @@ interface PostEditorProps {
   onClose: () => void;
 }
 
+type PostStatus = 'draft' | 'published' | 'archived';
+
 const PostEditor = ({ post, onClose }: PostEditorProps) => {
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
     excerpt: '',
     content: '',
-    status: 'draft',
+    status: 'draft' as PostStatus,
     category: 'General',
     image_url: '',
     tags: '',
@@ -36,7 +38,7 @@ const PostEditor = ({ post, onClose }: PostEditorProps) => {
         slug: post.slug || '',
         excerpt: post.excerpt || '',
         content: post.content || '',
-        status: post.status || 'draft',
+        status: (post.status as PostStatus) || 'draft',
         category: post.category || 'General',
         image_url: post.image_url || '',
         tags: post.tags ? post.tags.join(', ') : '',
@@ -47,7 +49,13 @@ const PostEditor = ({ post, onClose }: PostEditorProps) => {
   const mutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const postData = {
-        ...data,
+        title: data.title,
+        slug: data.slug,
+        excerpt: data.excerpt,
+        content: data.content,
+        status: data.status,
+        category: data.category,
+        image_url: data.image_url,
         tags: data.tags.split(',').map(tag => tag.trim()).filter(Boolean),
         author_id: user?.id,
         author: user?.user_metadata?.full_name || user?.email || 'Anonymous',
@@ -98,6 +106,10 @@ const PostEditor = ({ post, onClose }: PostEditorProps) => {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleStatusChange = (value: PostStatus) => {
+    setFormData(prev => ({ ...prev, status: value }));
   };
 
   return (
@@ -153,7 +165,7 @@ const PostEditor = ({ post, onClose }: PostEditorProps) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Label htmlFor="status">Status</Label>
-          <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
+          <Select value={formData.status} onValueChange={handleStatusChange}>
             <SelectTrigger className="bg-navy-800/50 border-gray-700">
               <SelectValue />
             </SelectTrigger>

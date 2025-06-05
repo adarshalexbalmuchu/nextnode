@@ -20,34 +20,42 @@ const UsersManager = () => {
     queryFn: async () => {
       let query = supabase
         .from('profiles')
-        .select(`
-          *,
-          user_roles(role)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (searchTerm) {
         query = query.or(`email.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%`);
       }
 
-      const { data, error } = await query;
+      const { data: profiles, error } = await query;
       if (error) throw error;
-      return data;
+
+      // Get user roles separately using RPC function
+      const usersWithRoles = await Promise.all(
+        (profiles || []).map(async (profile) => {
+          try {
+            const { data: role } = await supabase.rpc('get_user_role', { 
+              _user_id: profile.id 
+            });
+            return { ...profile, role: role || 'user' };
+          } catch (error) {
+            console.error('Error getting role for user:', profile.id, error);
+            return { ...profile, role: 'user' };
+          }
+        })
+      );
+
+      return usersWithRoles;
     },
   });
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
-      // First, delete existing role
-      await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId);
-
-      // Then insert new role
-      const { error } = await supabase
-        .from('user_roles')
-        .insert({ user_id: userId, role: newRole });
+      // Call custom function to update user role
+      const { error } = await supabase.rpc('update_user_role', {
+        _user_id: userId,
+        _role: newRole
+      });
       
       if (error) throw error;
     },
@@ -62,10 +70,6 @@ const UsersManager = () => {
 
   const handleRoleChange = (userId: string, newRole: string) => {
     updateRoleMutation.mutate({ userId, newRole });
-  };
-
-  const getUserRole = (user: any) => {
-    return user.user_roles?.[0]?.role || 'user';
   };
 
   const getRoleBadge = (role: string) => {
@@ -116,7 +120,7 @@ const UsersManager = () => {
                 </TableHeader>
                 <TableBody>
                   {users?.map((user) => {
-                    const role = getUserRole(user);
+                    const role = user.role || 'user';
                     const roleConfig = getRoleBadge(role);
                     const RoleIcon = roleConfig.icon;
                     
