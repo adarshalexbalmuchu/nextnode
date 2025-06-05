@@ -4,12 +4,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Search, Menu, Zap, X } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { Search, Menu, Zap, X, LogOut, Shield } from 'lucide-react';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, isAdmin, signOut } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -37,6 +39,10 @@ const Header = () => {
     if (href === '/' && location.pathname === '/') return true;
     if (href !== '/' && location.pathname.startsWith(href)) return true;
     return false;
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   return (
@@ -98,10 +104,34 @@ const Header = () => {
               />
             </div>
 
-            <Button className="bg-gradient-to-r from-primary to-accent text-navy hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 group font-semibold">
-              <span>Subscribe</span>
-              <Zap className="w-4 h-4 ml-2 group-hover:rotate-12 transition-transform duration-300" />
-            </Button>
+            {user ? (
+              <div className="flex items-center space-x-2">
+                {isAdmin && (
+                  <Link to="/admin">
+                    <Button variant="outline" size="sm" className="border-primary/50 text-primary hover:bg-primary/10">
+                      <Shield className="w-4 h-4 mr-2" />
+                      Admin
+                    </Button>
+                  </Link>
+                )}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleSignOut}
+                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Link to="/auth">
+                <Button className="bg-gradient-to-r from-primary to-accent text-navy hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 group font-semibold">
+                  <span>Sign In</span>
+                  <Zap className="w-4 h-4 ml-2 group-hover:rotate-12 transition-transform duration-300" />
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -153,13 +183,36 @@ const Header = () => {
                         {item.name}
                       </Link>
                     ))}
+                    
+                    {user && isAdmin && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="text-lg font-medium text-primary hover:text-primary/80 transition-colors duration-300 flex items-center"
+                      >
+                        <Shield className="w-4 h-4 mr-2" />
+                        Admin Dashboard
+                      </Link>
+                    )}
                   </nav>
 
                   {/* Mobile CTA */}
                   <div className="pt-4 border-t border-gray-700">
-                    <Button className="w-full bg-gradient-to-r from-primary to-accent text-navy font-semibold">
-                      Subscribe to Newsletter
-                    </Button>
+                    {user ? (
+                      <Button 
+                        onClick={handleSignOut}
+                        className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold"
+                      >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sign Out
+                      </Button>
+                    ) : (
+                      <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button className="w-full bg-gradient-to-r from-primary to-accent text-navy font-semibold">
+                          Sign In to Dashboard
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </SheetContent>
