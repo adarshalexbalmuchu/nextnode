@@ -23,9 +23,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Get initial session
+    const getInitialSession = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+        
+        if (initialSession?.user) {
+          // Fetch user role for initial session
+          setTimeout(async () => {
+            try {
+              const { data, error } = await supabase.rpc('get_user_role', { 
+                user_id: initialSession.user.id 
+              });
+              if (!error) {
+                setUserRole(data);
+              }
+            } catch (err) {
+              console.error('Error fetching user role:', err);
+            }
+          }, 0);
+        }
+      } catch (error) {
+        console.error('Error getting initial session:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getInitialSession();
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -51,42 +83,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
     return () => subscription.unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      return { error };
+    } catch (error) {
+      return { error };
+    }
   };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName,
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: fullName,
+          },
         },
-      },
-    });
-    return { error };
+      });
+      return { error };
+    } catch (error) {
+      return { error };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   const isAdmin = userRole === 'admin';

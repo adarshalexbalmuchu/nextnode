@@ -15,14 +15,30 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
+    if (user && !authLoading) {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [user, navigate, authLoading]);
+
+  // Don't render the form if we're still loading auth state
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center px-4">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Don't render the form if user is already authenticated
+  if (user) {
+    return null;
+  }
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +47,7 @@ const Auth = () => {
     const { error } = await signIn(email, password);
     
     if (error) {
-      toast.error(error.message);
+      toast.error(error.message || 'Sign in failed');
     } else {
       toast.success('Welcome back!');
       navigate('/');
@@ -47,7 +63,11 @@ const Auth = () => {
     const { error } = await signUp(email, password, fullName);
     
     if (error) {
-      toast.error(error.message);
+      if (error.message?.includes('User already registered')) {
+        toast.error('An account with this email already exists. Please sign in instead.');
+      } else {
+        toast.error(error.message || 'Sign up failed');
+      }
     } else {
       toast.success('Account created! Please check your email to verify your account.');
     }
