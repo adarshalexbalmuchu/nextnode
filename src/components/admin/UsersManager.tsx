@@ -10,6 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Crown, Shield, User } from 'lucide-react';
 import { toast } from 'sonner';
+import type { Database } from '@/integrations/supabase/types';
+
+type UserRole = Database['public']['Enums']['app_role'];
 
 const UsersManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,7 +37,7 @@ const UsersManager = () => {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: UserRole }) => {
       const { error } = await supabase
         .from('profiles')
         .update({ role: newRole })
@@ -51,7 +54,7 @@ const UsersManager = () => {
     },
   });
 
-  const handleRoleChange = (userId: string, newRole: string) => {
+  const handleRoleChange = (userId: string, newRole: UserRole) => {
     updateRoleMutation.mutate({ userId, newRole });
   };
 
@@ -125,7 +128,7 @@ const UsersManager = () => {
                         <TableCell>
                           <Select
                             value={role}
-                            onValueChange={(newRole) => handleRoleChange(user.id, newRole)}
+                            onValueChange={(newRole: UserRole) => handleRoleChange(user.id, newRole)}
                           >
                             <SelectTrigger className="w-32 bg-navy-800/50 border-gray-700">
                               <SelectValue />
