@@ -27,32 +27,14 @@ const UsersManager = () => {
         query = query.or(`email.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%`);
       }
 
-      const { data: profiles, error } = await query;
+      const { data, error } = await query;
       if (error) throw error;
-
-      // Get user roles separately using RPC function
-      const usersWithRoles = await Promise.all(
-        (profiles || []).map(async (profile) => {
-          try {
-            const { data: role } = await supabase.rpc('get_user_role', { 
-              user_id: profile.id 
-            });
-            return { ...profile, role: role || 'user' };
-          } catch (error) {
-            console.error('Error getting role for user:', profile.id, error);
-            return { ...profile, role: 'user' };
-          }
-        })
-      );
-
-      return usersWithRoles;
+      return data || [];
     },
   });
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
-      // Since update_user_role doesn't exist, we'll update the profiles table directly
-      // This assumes the role is stored in the profiles table
       const { error } = await supabase
         .from('profiles')
         .update({ role: newRole })
@@ -64,7 +46,7 @@ const UsersManager = () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       toast.success('User role updated successfully');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error('Failed to update user role: ' + error.message);
     },
   });

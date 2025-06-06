@@ -28,7 +28,22 @@ export type Database = {
           post_id?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookmarks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       categories: {
         Row: {
@@ -63,6 +78,8 @@ export type Database = {
           created_at: string | null
           id: string
           post_id: string | null
+          status: string | null
+          updated_at: string | null
           user_id: string | null
         }
         Insert: {
@@ -70,6 +87,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           post_id?: string | null
+          status?: string | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
@@ -77,25 +96,42 @@ export type Database = {
           created_at?: string | null
           id?: string
           post_id?: string | null
+          status?: string | null
+          updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       newsletter_subscribers: {
         Row: {
           email: string
           id: string
-          subscribed_at: string
+          subscribed_at: string | null
         }
         Insert: {
           email: string
           id?: string
-          subscribed_at?: string
+          subscribed_at?: string | null
         }
         Update: {
           email?: string
           id?: string
-          subscribed_at?: string
+          subscribed_at?: string | null
         }
         Relationships: []
       }
@@ -105,10 +141,9 @@ export type Database = {
           author_id: string | null
           category: string | null
           category_id: string | null
-          content: string | null
+          content: string
           cover_image_url: string | null
           created_at: string | null
-          draft: boolean | null
           excerpt: string | null
           id: string
           image_url: string | null
@@ -126,10 +161,9 @@ export type Database = {
           author_id?: string | null
           category?: string | null
           category_id?: string | null
-          content?: string | null
+          content: string
           cover_image_url?: string | null
           created_at?: string | null
-          draft?: boolean | null
           excerpt?: string | null
           id?: string
           image_url?: string | null
@@ -147,10 +181,9 @@ export type Database = {
           author_id?: string | null
           category?: string | null
           category_id?: string | null
-          content?: string | null
+          content?: string
           cover_image_url?: string | null
           created_at?: string | null
-          draft?: boolean | null
           excerpt?: string | null
           id?: string
           image_url?: string | null
@@ -165,6 +198,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "posts_category_id_fkey"
             columns: ["category_id"]
             isOneToOne: false
@@ -175,27 +215,30 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string | null
           email: string | null
           full_name: string | null
           id: string
-          role: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
           updated_at: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string | null
           id: string
-          role?: string | null
+          role?: Database["public"]["Enums"]["app_role"] | null
           updated_at?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
-          role?: string | null
+          role?: Database["public"]["Enums"]["app_role"] | null
           updated_at?: string | null
         }
         Relationships: []
@@ -219,37 +262,22 @@ export type Database = {
           user_id?: string | null
           viewed_at?: string | null
         }
-        Relationships: []
-      }
-      users: {
-        Row: {
-          avatar_url: string | null
-          created_at: string | null
-          email: string
-          full_name: string | null
-          id: string
-          role: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string | null
-          email: string
-          full_name?: string | null
-          id: string
-          role?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string | null
-          email?: string
-          full_name?: string | null
-          id?: string
-          role?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reading_history_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reading_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -258,7 +286,15 @@ export type Database = {
     Functions: {
       get_user_role: {
         Args: { user_id: string }
-        Returns: string
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_admin_or_editor: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       make_user_admin: {
         Args: { user_email: string }
@@ -266,6 +302,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "user" | "moderator" | "admin"
       post_status: "draft" | "published" | "archived"
     }
     CompositeTypes: {
@@ -382,6 +419,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["user", "moderator", "admin"],
       post_status: ["draft", "published", "archived"],
     },
   },
